@@ -482,7 +482,7 @@ export default function ProposalPage() {
         <main className="min-h-screen bg-black text-white">
             <div className="max-w-2xl mx-auto px-4 py-12">
                 <h1 className="text-3xl font-bold text-center mb-2">Your Campaign Brief</h1>
-                <p className="text-neutral-400 text-center mb-8">
+                <p className="text-white/50 text-center mb-8">
                     {phase === "loading" || phase === "revising"
                         ? "Crafting your campaign brief..."
                         : "Review your campaign before we generate everything"}
@@ -491,7 +491,7 @@ export default function ProposalPage() {
                 {(phase === "loading" || phase === "revising") && (
                     <div className="flex flex-col items-center gap-4 py-16">
                         <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <p className="text-neutral-400 text-sm">
+                        <p className="text-white/50 text-sm">
                             {phase === "revising" ? "Revising your brief..." : "Building your creative brief..."}
                         </p>
                     </div>
@@ -508,14 +508,14 @@ export default function ProposalPage() {
                                         generatingStarted.current = false;
                                         setStepStatuses(STEPS.map(() => "waiting"));
                                     }}
-                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors"
                                 >
                                     Back to proposal
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => generateProposal()}
-                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors"
                                 >
                                     Retry
                                 </button>
@@ -532,7 +532,7 @@ export default function ProposalPage() {
                             <button
                                 onClick={handleApprove}
                                 disabled={generatingStarted.current}
-                                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-lg hover:bg-neutral-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-lg hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 Looks good, generate it all
                             </button>
@@ -556,7 +556,7 @@ export default function ProposalPage() {
                                 <button
                                     onClick={handleRevise}
                                     disabled={!revisionFeedback.trim()}
-                                    className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition-colors disabled:opacity-40"
+                                    className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors disabled:opacity-40"
                                 >
                                     Submit Revision
                                 </button>

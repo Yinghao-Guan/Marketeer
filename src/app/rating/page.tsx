@@ -225,7 +225,7 @@ export default function RatingPage() {
                   ? "Applying improvement..."
                   : "Analyzing your logo..."}
             </p>
-            <p className="text-neutral-400 text-sm">
+            <p className="text-white/50 text-sm">
               {phase === "generating-logo"
                 ? "Designing something unique for your brand"
                 : phase === "improving"
@@ -238,7 +238,7 @@ export default function RatingPage() {
         {phase === "ready" && (
           <>
             <h1 className="text-3xl font-bold text-center mb-2">Logo Rating</h1>
-            <p className="text-neutral-400 text-center mb-8">
+            <p className="text-white/50 text-center mb-8">
               Here&apos;s how your logo performs across formats
             </p>
           </>
@@ -250,7 +250,7 @@ export default function RatingPage() {
             <p className="text-red-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+              className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors"
             >
               Retry
             </button>
@@ -262,7 +262,7 @@ export default function RatingPage() {
           <>
             {/* Logo preview */}
             <div className="flex justify-center mb-8">
-              <div className="w-48 h-48 rounded-[32px] border border-neutral-700 bg-white p-5 flex items-center justify-center shadow-lg">
+              <div className="w-48 h-48 rounded-[32px] border border-white/10 bg-white p-5 flex items-center justify-center shadow-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/png;base64,${logoBase64}`}
@@ -281,7 +281,7 @@ export default function RatingPage() {
 
             {/* Logo History */}
             {logoHistory.length > 1 && (
-              <div className="mt-8 rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+              <div className="mt-8 rounded-xl border border-white/10 bg-white/5 p-4">
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Generation History
                 </h3>
@@ -294,8 +294,8 @@ export default function RatingPage() {
                         onClick={() => handleRevert(i)}
                         className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
                           isActive
-                            ? "ring-2 ring-white bg-neutral-800"
-                            : "hover:bg-neutral-800/50"
+                            ? "ring-2 ring-white bg-white/10"
+                            : "hover:bg-white/5"
                         }`}
                       >
                         <div className="w-16 h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
@@ -306,7 +306,7 @@ export default function RatingPage() {
                             className="max-w-full max-h-full object-contain"
                           />
                         </div>
-                        <span className="text-xs text-neutral-400">
+                        <span className="text-xs text-white/50">
                           v{i + 1}
                         </span>
                         <span className="text-xs font-semibold text-green-500">
@@ -324,7 +324,7 @@ export default function RatingPage() {
               <button
                 onClick={handleApprove}
                 className="px-8 py-3 rounded-xl bg-white text-black font-semibold text-lg
-                  hover:bg-neutral-200 transition-colors"
+                  hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-colors"
               >
                 Approve &amp; Continue
               </button>
