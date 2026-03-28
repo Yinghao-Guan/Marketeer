@@ -75,12 +75,12 @@ export default function FileUpload({
         onDragLeave={() => setIsDragging(false)}
         className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
           isDragging
-            ? "border-white bg-neutral-800"
-            : "border-neutral-700 hover:border-neutral-500"
+            ? "border-[#5227FF] bg-[#5227FF]/10"
+            : "border-white/20 hover:border-white/40"
         }`}
       >
-        <p className="text-neutral-400">{label}</p>
-        <p className="mt-1 text-sm text-neutral-500">PNG, JPG, or WebP</p>
+        <p className="text-white/60">{label}</p>
+        <p className="mt-1 text-sm text-white/40">PNG, JPG, or WebP</p>
         <input
           ref={inputRef}
           type="file"

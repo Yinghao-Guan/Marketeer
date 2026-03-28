@@ -16,7 +16,7 @@ export default function AssetCard({
   isRegenerating = false,
 }: AssetCardProps) {
   return (
-    <div className="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+    <div className="glass-card relative overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-sm font-semibold text-white/80">{title}</span>
@@ -62,7 +62,7 @@ export default function AssetCard({
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-2xl">
           <div className="flex flex-col items-center gap-3">
             <svg
-              className="w-8 h-8 text-indigo-400 animate-spin"
+              className="w-8 h-8 text-accent-purple animate-spin"
               fill="none"
               viewBox="0 0 24 24"
             >

@@ -333,7 +333,7 @@ export default function ProposalPage() {
         const progressPct = Math.round((doneCount / STEPS.length) * 100);
 
         return (
-            <main className="min-h-screen bg-black text-white flex flex-col">
+            <main className="min-h-screen text-white flex flex-col">
                 {/* Top progress bar */}
                 <div className="h-0.5 bg-white/10 w-full">
                     <motion.div
@@ -353,7 +353,7 @@ export default function ProposalPage() {
                         className="text-center mb-12"
                     >
                         <h1 className="text-3xl font-bold mb-2">Building your campaign</h1>
-                        <p className="text-white/40 text-sm">This usually takes 1–3 minutes. Hang tight.</p>
+                        <p className="text-white/50 text-sm">This usually takes 1-3 minutes. Hang tight.</p>
                     </motion.div>
 
                     <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-[260px_1fr]">
@@ -423,8 +423,8 @@ export default function ProposalPage() {
                                         </motion.div>
                                     ) : (
                                         <motion.div key="banners-loading" className="flex items-center gap-3 h-16">
-                                            <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-                                            <span className="text-sm text-white/30">Crafting banner visuals…</span>
+                                            <div className="w-4 h-4 border border-white/20 border-t-[#5227FF] rounded-full animate-spin" />
+                                            <span className="text-sm text-white/30">Crafting banner visuals...</span>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -433,8 +433,8 @@ export default function ProposalPage() {
                             {/* Jingle + Voiceover */}
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {[
-                                    { label: "Jingle", src: generatedJingle, pending: "Composing music…" },
-                                    { label: "Voiceover", src: generatedVoiceover, pending: "Recording voice…" },
+                                    { label: "Jingle", src: generatedJingle, pending: "Composing music..." },
+                                    { label: "Voiceover", src: generatedVoiceover, pending: "Recording voice..." },
                                 ].map(({ label, src, pending }) => (
                                     <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                                         <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">{label}</h2>
@@ -445,7 +445,7 @@ export default function ProposalPage() {
                                                 </motion.div>
                                             ) : (
                                                 <motion.div key="loading" className="flex items-center gap-3 h-10">
-                                                    <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                                                    <div className="w-4 h-4 border border-white/20 border-t-[#5227FF] rounded-full animate-spin" />
                                                     <span className="text-sm text-white/30">{pending}</span>
                                                 </motion.div>
                                             )}
@@ -464,8 +464,8 @@ export default function ProposalPage() {
                                         </motion.div>
                                     ) : (
                                         <motion.div key="loading" className="flex items-center gap-3 h-16">
-                                            <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-                                            <span className="text-sm text-white/30">Filming your ad — this can take up to 2 min…</span>
+                                            <div className="w-4 h-4 border border-white/20 border-t-[#5227FF] rounded-full animate-spin" />
+                                            <span className="text-sm text-white/30">Filming your ad -- this can take up to 2 min...</span>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -479,10 +479,10 @@ export default function ProposalPage() {
 
     // ── Proposal screen ───────────────────────────────────────────────────────
     return (
-        <main className="min-h-screen bg-black text-white">
+        <main className="min-h-screen text-white">
             <div className="max-w-2xl mx-auto px-4 py-12">
                 <h1 className="text-3xl font-bold text-center mb-2">Your Campaign Brief</h1>
-                <p className="text-neutral-400 text-center mb-8">
+                <p className="text-white/50 text-center mb-8">
                     {phase === "loading" || phase === "revising"
                         ? "Crafting your campaign brief..."
                         : "Review your campaign before we generate everything"}
@@ -490,8 +490,8 @@ export default function ProposalPage() {
 
                 {(phase === "loading" || phase === "revising") && (
                     <div className="flex flex-col items-center gap-4 py-16">
-                        <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <p className="text-neutral-400 text-sm">
+                        <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
+                        <p className="text-white/50 text-sm">
                             {phase === "revising" ? "Revising your brief..." : "Building your creative brief..."}
                         </p>
                     </div>
@@ -508,14 +508,14 @@ export default function ProposalPage() {
                                         generatingStarted.current = false;
                                         setStepStatuses(STEPS.map(() => "waiting"));
                                     }}
-                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                                    className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
                                 >
                                     Back to proposal
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => generateProposal()}
-                                    className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                                    className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
                                 >
                                     Retry
                                 </button>
@@ -532,13 +532,13 @@ export default function ProposalPage() {
                             <button
                                 onClick={handleApprove}
                                 disabled={generatingStarted.current}
-                                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-lg hover:bg-neutral-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-full bg-white text-black font-semibold text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 Looks good, generate it all
                             </button>
                             <button
                                 onClick={() => setShowRevise((v) => !v)}
-                                className="w-full py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/5 transition-colors"
+                                className="w-full py-3 rounded-full border border-white/20 text-white font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] active:scale-[0.98]"
                             >
                                 Revise
                             </button>
@@ -556,7 +556,7 @@ export default function ProposalPage() {
                                 <button
                                     onClick={handleRevise}
                                     disabled={!revisionFeedback.trim()}
-                                    className="w-full py-3 rounded-xl bg-white text-black font-semibold hover:bg-neutral-200 transition-colors disabled:opacity-40"
+                                    className="w-full py-3 rounded-full bg-white text-black font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] disabled:opacity-40"
                                 >
                                     Submit Revision
                                 </button>
@@ -571,7 +571,7 @@ export default function ProposalPage() {
 
 function StatusIcon({ status }: { status: StepStatus }) {
     if (status === "active") {
-        return <div className="w-5 h-5 shrink-0 border-2 border-white border-t-transparent rounded-full animate-spin" />;
+        return <div className="w-5 h-5 shrink-0 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />;
     }
     if (status === "done") {
         return (
@@ -583,7 +583,7 @@ function StatusIcon({ status }: { status: StepStatus }) {
         );
     }
     if (status === "error") {
-        return <div className="w-5 h-5 shrink-0 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✕</div>;
+        return <div className="w-5 h-5 shrink-0 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">X</div>;
     }
     return <div className="w-5 h-5 shrink-0 rounded-full border border-white/20" />;
 }

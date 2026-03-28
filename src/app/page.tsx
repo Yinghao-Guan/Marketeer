@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { LogoLoop } from "@/components/LogoLoop/LogoLoop";
+import { fadeBlur, titleContainer, titleLetter } from "@/lib/motion";
 
 const HACKATHON_LOGOS = [
   { src: "/logos/glitchlogo.png", alt: "Glitch Club" },
@@ -50,20 +51,6 @@ const STOREFRONT_IMAGES = [
   { src: "https://images.unsplash.com/photo-1507914372368-b2b085b925a1?w=774&auto=format&fit=crop", alt: "Bookshop" },
 ];
 
-const fadeBlur = {
-  hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
-  visible: (delay: number) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.8,
-      ease: [0.32, 0.72, 0, 1],
-      delay,
-    },
-  }),
-};
-
 export default function Home() {
   const router = useRouter();
 
@@ -91,7 +78,7 @@ export default function Home() {
 
   const start = (hasLogo: boolean) => {
     sessionStorage.setItem("marketeer-campaign", JSON.stringify({ hasLogo }));
-    router.push(hasLogo ? "/onboarding/upload-logo" : "/onboarding/location");
+    router.push("/onboarding");
   };
 
   return (
@@ -119,7 +106,7 @@ export default function Home() {
       </div>
 
       {/* Right — Branding + CTA */}
-      <div className="relative h-screen overflow-hidden font-[family-name:var(--font-geist-sans)]" style={{ width: "30%" }}>
+      <div className="relative h-screen overflow-hidden" style={{ width: "30%" }}>
         {/* Liquid Ether background */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
           <LiquidEther
@@ -146,12 +133,8 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           custom={0.1}
-          className="text-7xl tracking-tight text-white text-center"
-          style={{
-            fontFamily: "var(--font-dirtyline)",
-            WebkitTextStroke: "2px black",
-            paintOrder: "stroke fill",
-          }}
+          className="text-8xl tracking-tight text-center whitespace-nowrap gradient-text-animated"
+          style={{ fontFamily: "var(--font-dirtyline)" }}
         >
           Marketeer
         </motion.h1>

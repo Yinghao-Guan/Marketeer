@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
+import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
 type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "ready" | "error";
@@ -24,6 +26,7 @@ export default function RatingPage() {
   const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
   const [logoHistory, setLogoHistory] = useState<LogoHistoryEntry[]>([]);
 
+  // Pull campaign state from sessionStorage (set by onboarding pages)
   const getCampaignData = useCallback(() => {
     const data = sessionStorage.getItem("marketeer-campaign");
     return data ? JSON.parse(data) : null;
@@ -40,7 +43,7 @@ export default function RatingPage() {
     [getCampaignData]
   );
 
-  // ── Initial load ──────────────────────────────────────
+  // ── Initial load: generate or analyze logo ─────────────
   useEffect(() => {
     const campaign = getCampaignData();
     if (!campaign) {
@@ -66,6 +69,7 @@ export default function RatingPage() {
       try {
         let logo = campaign.userLogo;
 
+        // Path B: no logo — generate one first
         if (!logo) {
           setPhase("generating-logo");
           const genRes = await fetch("/api/generate-logo", {
@@ -85,8 +89,9 @@ export default function RatingPage() {
         }
 
         setLogoBase64(logo);
-        setPhase("analyzing");
 
+        // Analyze the logo
+        setPhase("analyzing");
         const analyzeRes = await fetch("/api/analyze-logo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -143,7 +148,7 @@ export default function RatingPage() {
       setLogoBase64(newLogo);
       saveCampaignData({ userLogo: newLogo });
 
-      // Re-analyze
+      // Re-analyze with the improved logo
       setPhase("analyzing");
       const campaign = getCampaignData();
       const analyzeRes = await fetch("/api/analyze-logo", {
@@ -197,6 +202,7 @@ export default function RatingPage() {
   const handleApprove = () => {
     saveCampaignData({ approvedLogo: logoBase64 });
 
+    // Start style lock extraction in the background — don't block navigation
     buildStyleLock(logoBase64)
       .then((styleLock: StyleLock) => saveCampaignData({ styleLock }))
       .catch(() =>
@@ -208,40 +214,43 @@ export default function RatingPage() {
     router.push("/proposal");
   };
 
+  // ── Render ────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        {/* Loading states */}
+    <main className="min-h-screen text-white">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="max-w-2xl mx-auto px-4 py-12"
+      >
+        <motion.h1 variants={staggerChild} className="text-3xl font-bold text-center mb-2">Logo Rating</motion.h1>
+        <motion.p variants={staggerChild} className="text-white/50 text-center mb-8">
+          {phase === "generating-logo"
+            ? "Generating your logo..."
+            : phase === "analyzing"
+              ? "Analyzing your logo with AI..."
+              : phase === "improving"
+                ? "Applying improvement to your logo..."
+                : phase === "ready"
+                  ? "Here's how your logo performs across formats"
+                  : ""}
+        </motion.p>
+
+        {/* Loading / generating states */}
         {(phase === "loading" ||
           phase === "generating-logo" ||
           phase === "analyzing" ||
           phase === "improving") && (
-          <div className="flex flex-col items-center gap-6 py-24">
-            <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <p className="text-2xl font-semibold text-white text-center">
+          <div className="flex flex-col items-center gap-4 py-16">
+            <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
+            <p className="text-white/50 text-sm">
               {phase === "generating-logo"
-                ? "Creating your logo..."
+                ? "Creating a logo for your brand..."
                 : phase === "improving"
-                  ? "Applying improvement..."
-                  : "Analyzing your logo..."}
-            </p>
-            <p className="text-neutral-400 text-sm">
-              {phase === "generating-logo"
-                ? "Designing something unique for your brand"
-                : phase === "improving"
-                  ? "Refining your logo based on feedback"
-                  : "Running marketing analysis across formats"}
+                  ? "Refining your logo based on feedback..."
+                  : "Running marketing analysis..."}
             </p>
           </div>
-        )}
-
-        {phase === "ready" && (
-          <>
-            <h1 className="text-3xl font-bold text-center mb-2">Logo Rating</h1>
-            <p className="text-neutral-400 text-center mb-8">
-              Here&apos;s how your logo performs across formats
-            </p>
-          </>
         )}
 
         {/* Error */}
@@ -250,19 +259,19 @@ export default function RatingPage() {
             <p className="text-red-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+              className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
             >
               Retry
             </button>
           </div>
         )}
 
-        {/* Ready */}
+        {/* Ready: show logo + ratings */}
         {phase === "ready" && rating && (
           <>
             {/* Logo preview */}
-            <div className="flex justify-center mb-8">
-              <div className="w-48 h-48 rounded-[32px] border border-neutral-700 bg-white p-5 flex items-center justify-center shadow-lg">
+            <motion.div variants={staggerChild} className="flex justify-center mb-8">
+              <div className="glass-card w-48 h-48 overflow-hidden flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/png;base64,${logoBase64}`}
@@ -270,18 +279,20 @@ export default function RatingPage() {
                   className="max-w-full max-h-full object-contain"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Rating */}
-            <RatingCard
-              rating={rating}
-              onApplyImprovement={handleApplyImprovement}
-              applyingIndex={applyingIndex}
-            />
+            {/* Rating details */}
+            <motion.div variants={staggerChild}>
+              <RatingCard
+                rating={rating}
+                onApplyImprovement={handleApplyImprovement}
+                applyingIndex={applyingIndex}
+              />
+            </motion.div>
 
             {/* Logo History */}
             {logoHistory.length > 1 && (
-              <div className="mt-8 rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+              <motion.div variants={staggerChild} className="mt-8 rounded-xl border border-white/10 bg-white/5 p-4">
                 <h3 className="text-sm font-semibold text-white mb-3">
                   Generation History
                 </h3>
@@ -292,10 +303,10 @@ export default function RatingPage() {
                       <button
                         key={i}
                         onClick={() => handleRevert(i)}
-                        className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
+                        className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                           isActive
-                            ? "ring-2 ring-white bg-neutral-800"
-                            : "hover:bg-neutral-800/50"
+                            ? "ring-2 ring-white bg-white/10"
+                            : "hover:bg-white/5"
                         }`}
                       >
                         <div className="w-16 h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
@@ -306,7 +317,7 @@ export default function RatingPage() {
                             className="max-w-full max-h-full object-contain"
                           />
                         </div>
-                        <span className="text-xs text-neutral-400">
+                        <span className="text-xs text-white/50">
                           v{i + 1}
                         </span>
                         <span className="text-xs font-semibold text-green-500">
@@ -316,22 +327,22 @@ export default function RatingPage() {
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Approve button */}
-            <div className="mt-8 flex justify-center">
+            <motion.div variants={staggerChild} className="mt-8 flex justify-center">
               <button
                 onClick={handleApprove}
-                className="px-8 py-3 rounded-xl bg-white text-black font-semibold text-lg
-                  hover:bg-neutral-200 transition-colors"
+                className="px-8 py-3 rounded-full bg-white text-black font-semibold text-lg
+                  hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
               >
                 Approve &amp; Continue
               </button>
-            </div>
+            </motion.div>
           </>
         )}
-      </div>
+      </motion.div>
     </main>
   );
 }
