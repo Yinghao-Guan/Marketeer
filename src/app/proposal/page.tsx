@@ -66,6 +66,17 @@ function ProposalContent() {
     const [generatedJingle, setGeneratedJingle] = useState("");
     const [generatedVideo, setGeneratedVideo] = useState("");
     const [generatedVoiceover, setGeneratedVoiceover] = useState("");
+    const [videoFailed, setVideoFailed] = useState(false);
+    const [retryingVideo, setRetryingVideo] = useState(false);
+    // Stash generation context so retry/skip can access it without re-generating
+    const genContext = useRef<{
+        campaign: Record<string, unknown>;
+        p: Proposal;
+        styleLock: { colors: string[]; style: string };
+        banners: Banner[];
+        jingle: string | undefined;
+        voiceover: string | undefined;
+    } | null>(null);
     const generatingStarted = useRef(false);
 
     const getCampaign = useCallback(() => {
@@ -142,6 +153,44 @@ function ProposalContent() {
         setStepStatuses((prev) => prev.map((s, i) => (i === index ? status : s)));
     };
 
+    const attemptVideo = async (
+        p: Proposal,
+        styleLock: { colors: string[]; style: string },
+        approvedLogo: string | undefined,
+    ): Promise<string> => {
+        // Clear any stale operation ID before starting fresh
+        let operationId = loadProgress().operationId;
+        if (operationId) {
+            console.log("resuming existing video operation:", operationId);
+        } else {
+            const startRes = await fetch("/api/generate-video", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    videoScene: p.videoScene,
+                    styleLock,
+                    logoBase64: approvedLogo ?? null,
+                    aspectRatio: "16:9",
+                }),
+            });
+            const startData = await startRes.json();
+            if (!startRes.ok) throw new Error(startData.error ?? "video generation failed");
+            operationId = startData.operationId;
+            if (!operationId) throw new Error("video generation did not return an operation ID");
+            saveProgress({ operationId });
+        }
+
+        const deadline = Date.now() + 2 * 60 * 1000;
+        while (Date.now() < deadline) {
+            await new Promise((r) => setTimeout(r, 5000));
+            const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId)}`);
+            const pollData = await pollRes.json();
+            if (!pollRes.ok) throw new Error(pollData.error ?? "video poll failed");
+            if (pollData.done) return pollData.videoBase64 as string;
+        }
+        throw new Error("video generation timed out after 2 minutes");
+    };
+
     const handleApprove = async () => {
         if (generatingStarted.current) return;
         generatingStarted.current = true;
@@ -163,9 +212,8 @@ function ProposalContent() {
         sessionStorage.removeItem(PROGRESS_KEY);
         let banners: Banner[];
         let jingle: string | undefined;
-        let videoBase64: string | undefined;
+        let videoBase64: string | null | undefined;
         let voiceover: string | undefined;
-        let finalVideo: string | undefined;
 
         // ── Step 0: Banners ───────────────────────────────────────────────────
         try {
@@ -219,47 +267,29 @@ function ProposalContent() {
             }
         };
 
-        const generateVideo = async () => {
+        const attemptVideoInner = () => attemptVideo(p, styleLock, approvedLogo);
+
+        const generateVideoStep = async (): Promise<string | null> => {
             setStep(2, "active");
             try {
-                let operationId = loadProgress().operationId;
-                if (!operationId) {
-                    const startRes = await fetch("/api/generate-video", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            videoScene: p.videoScene,
-                            styleLock,
-                            logoBase64: approvedLogo ?? null,
-                            aspectRatio: "16:9",
-                        }),
-                    });
-                    const startData = await startRes.json();
-                    if (!startRes.ok) throw new Error(startData.error ?? "Video generation failed");
-                    operationId = startData.operationId;
-                    saveProgress({ operationId });
+                const video = await attemptVideoInner();
+                setGeneratedVideo(video);
+                setStep(2, "done");
+                return video;
+            } catch (firstError) {
+                // Retry once with a fresh operation
+                console.warn("video generation attempt 1 failed, retrying:", firstError);
+                sessionStorage.removeItem(PROGRESS_KEY);
+                try {
+                    const video = await attemptVideoInner();
+                    setGeneratedVideo(video);
+                    setStep(2, "done");
+                    return video;
+                } catch (retryError) {
+                    console.error("video generation failed after retry:", retryError instanceof Error ? retryError.message : retryError);
+                    setStep(2, "error");
+                    return null;
                 }
-
-                if (!operationId) {
-                    throw new Error("Video generation did not return an operation ID");
-                }
-
-                const deadline = Date.now() + 2 * 60 * 1000;
-                while (Date.now() < deadline) {
-                    await new Promise((r) => setTimeout(r, 5000));
-                    const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId)}`);
-                    const pollData = await pollRes.json();
-                    if (!pollRes.ok) throw new Error(pollData.error ?? "Video poll failed");
-                    if (pollData.done) {
-                        setGeneratedVideo(pollData.videoBase64);
-                        setStep(2, "done");
-                        return pollData.videoBase64 as string;
-                    }
-                }
-                throw new Error("Video generation timed out after 2 minutes");
-            } catch (e) {
-                setStep(2, "error");
-                throw new Error(e instanceof Error ? e.message : "Video generation failed");
             }
         };
 
@@ -285,68 +315,131 @@ function ProposalContent() {
             }
         };
 
-        try {
-            [jingle, videoBase64, voiceover] = await Promise.all([
-                generateJingle(),
-                generateVideo(),
-                generateVoiceover(),
-            ]);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Asset generation failed");
+        const results = await Promise.allSettled([
+            generateJingle(),
+            generateVideoStep(),
+            generateVoiceover(),
+        ]);
+
+        jingle = results[0].status === "fulfilled" ? results[0].value : undefined;
+        videoBase64 = results[1].status === "fulfilled" ? results[1].value : null;
+        voiceover = results[2].status === "fulfilled" ? results[2].value : undefined;
+
+        // If jingle AND voiceover both failed, abort
+        if (!jingle && !voiceover) {
+            const reasons = results
+                .filter((r) => r.status === "rejected")
+                .map((r) => (r as PromiseRejectedResult).reason?.message)
+                .filter(Boolean);
+            setError(reasons.join("; ") || "asset generation failed");
             setPhase("error");
             generatingStarted.current = false;
             return;
         }
 
-        // ── Step 4: FFmpeg merge ──────────────────────────────────────────────
-        try {
-            setStep(4, "active");
-            finalVideo = await mergeVideoAudio(videoBase64!, voiceover!);
-            setStep(4, "done");
-        } catch (e) {
-            setStep(4, "error");
-            setError(e instanceof Error ? e.message : "Video merge failed");
-            setPhase("error");
-            generatingStarted.current = false;
+        // If video failed, pause here and let the user retry or skip
+        if (!videoBase64) {
+            genContext.current = { campaign, p, styleLock, banners, jingle, voiceover };
+            setVideoFailed(true);
             return;
+        }
+
+        // Video succeeded — merge and save
+        await mergeAndSave({ campaign, p, styleLock, banners, jingle, videoBase64, voiceover });
+    };
+
+    const mergeAndSave = async ({
+        campaign, p, styleLock, banners, jingle, videoBase64, voiceover,
+    }: {
+        campaign: Record<string, unknown>;
+        p: Proposal;
+        styleLock: { colors: string[]; style: string };
+        banners: Banner[];
+        jingle: string | undefined;
+        videoBase64: string | null | undefined;
+        voiceover: string | undefined;
+    }) => {
+        let finalVideo: string | undefined;
+
+        // ── Step 4: FFmpeg merge (skip if video missing) ─────────────────────
+        if (videoBase64 && voiceover) {
+            try {
+                setStep(4, "active");
+                finalVideo = await mergeVideoAudio(videoBase64, voiceover);
+                setStep(4, "done");
+            } catch (e) {
+                console.error("FFmpeg merge failed:", e);
+                setStep(4, "error");
+            }
+        } else {
+            setStep(4, videoBase64 ? "done" : "error");
         }
 
         // ── Save & navigate ───────────────────────────────────────────────────
-        const campaignId = campaign.id ?? `campaign-${Date.now()}`;
-        const finalData = {
+        const campaignId = (campaign.id as string) ?? `campaign-${Date.now()}`;
+        const approvedLogo = campaign.approvedLogo as string | undefined;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const finalData: Partial<import("@/lib/store").Campaign> = {
             approvedLogo: approvedLogo ?? "",
-            logoRating: campaign.logoRating ?? null,
+            logoRating: (campaign.logoRating as import("@/lib/store").LogoRating) ?? null,
             styleLock,
             proposal: p,
-            jingleMood: campaign.jingleMood ?? "upbeat",
+            jingleMood: (campaign.jingleMood as string) ?? "upbeat",
             banners,
-            jingle,
-            video: videoBase64!,
-            voiceover,
-            finalVideo,
+            jingle: jingle ?? "",
+            video: videoBase64 ?? "",
+            voiceover: voiceover ?? "",
+            finalVideo: finalVideo ?? "",
             finalVideoVersion: FINAL_VIDEO_VERSION,
             currentStep: "dashboard" as const,
         };
         try {
             await updateCampaign(campaignId, finalData);
         } catch {
-            // Fallback: campaign wasn't in IndexedDB yet (legacy flow)
             await saveCampaign({
                 id: campaignId,
                 createdAt: new Date(),
-                hasLogo: campaign.hasLogo ?? true,
-                userLogo: campaign.userLogo ?? null,
-                competitorLogos: campaign.competitorLogos ?? [],
-                location: campaign.location ?? "",
-                industry: campaign.industry ?? "",
-                brandName: campaign.brandName ?? "",
-                description: campaign.description ?? "",
+                hasLogo: (campaign.hasLogo as boolean) ?? true,
+                userLogo: (campaign.userLogo as string) ?? null,
+                competitorLogos: (campaign.competitorLogos as string[]) ?? [],
+                location: (campaign.location as string) ?? "",
+                industry: (campaign.industry as string) ?? "",
+                brandName: (campaign.brandName as string) ?? "",
+                description: (campaign.description as string) ?? "",
                 ...finalData,
-            });
+            } as import("@/lib/store").Campaign);
         }
 
         sessionStorage.removeItem(PROGRESS_KEY);
         router.push("/dashboard");
+    };
+
+    const handleRetryVideo = async () => {
+        const ctx = genContext.current;
+        if (!ctx) return;
+        setRetryingVideo(true);
+        setVideoFailed(false);
+        setStep(2, "active");
+        // Clear stale operation ID so a fresh one is created
+        sessionStorage.removeItem(PROGRESS_KEY);
+
+        try {
+            const video = await attemptVideo(ctx.p, ctx.styleLock, ctx.campaign.approvedLogo as string | undefined);
+            setGeneratedVideo(video);
+            setStep(2, "done");
+            await mergeAndSave({ ...ctx, videoBase64: video });
+        } catch (e) {
+            console.error("video retry failed:", e instanceof Error ? e.message : e);
+            setStep(2, "error");
+            setVideoFailed(true);
+        } finally {
+            setRetryingVideo(false);
+        }
+    };
+
+    const handleSkipVideo = async () => {
+        if (!genContext.current) return;
+        await mergeAndSave({ ...genContext.current, videoBase64: null });
     };
 
     const handleRevise = async () => {
@@ -490,11 +583,30 @@ function ProposalContent() {
 
                             {/* Video */}
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                                <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Video Ad</h2>
+                                <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">video ad</h2>
                                 <AnimatePresence mode="wait">
                                     {generatedVideo ? (
                                         <motion.div key="ready" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
                                             <VideoPlayer src={generatedVideo} poster={campaign?.approvedLogo} />
+                                        </motion.div>
+                                    ) : videoFailed ? (
+                                        <motion.div key="failed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                                            <p className="text-sm text-red-400/80">video generation failed</p>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={handleRetryVideo}
+                                                    disabled={retryingVideo}
+                                                    className="px-4 py-2 rounded-full bg-white text-black text-sm font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 disabled:opacity-50"
+                                                >
+                                                    {retryingVideo ? "retrying..." : "retry video"}
+                                                </button>
+                                                <button
+                                                    onClick={handleSkipVideo}
+                                                    className="px-4 py-2 rounded-full border border-white/10 text-white/50 text-sm font-medium hover:bg-white/[0.06] active:scale-[0.98] transition-all duration-500"
+                                                >
+                                                    continue without video
+                                                </button>
+                                            </div>
                                         </motion.div>
                                     ) : (
                                         <motion.div key="loading" className="flex items-center gap-3 h-16">

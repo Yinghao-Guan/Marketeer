@@ -48,10 +48,11 @@ export const VIDEO_SCENE_PROMPT = (
     colors: string[],
     style: string
 ) => `
-Cinematic video shot: ${videoScene}.
+Cinematic video shot of a product or environment (no people, no faces): ${videoScene}.
 Visual Style: ${style}.
 Color Grade: Emphasize ${colors.join(', ')}.
 Technical: 4K textures, smooth camera movement, professional lighting, photorealistic.
+Focus on objects, interiors, exteriors, and close-up product shots. No humans or text overlays.
 `;
 
 export const VOICEOVER_PROMPT = (
