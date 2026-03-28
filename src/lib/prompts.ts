@@ -19,12 +19,18 @@ Logo Description: ${logoDescription}
 Competitor Analysis: ${competitorAnalysis}
 ${revisionFeedback ? `Revision Feedback: ${revisionFeedback}` : ''}
 
+IMPORTANT — Location matters. The business is in ${location}. Incorporate this into every asset:
+- bannerConcept: Reference the local environment, architecture, or cultural elements of ${location} in the visual composition.
+- jingleMood: Consider regional music styles or energy that resonates with audiences in ${location}.
+- videoScene: Set the scene in a setting authentic to ${location} — use local landmarks, landscapes, or typical environments.
+- voiceoverScript: Write copy that speaks naturally to customers in ${location}.
+
 Output a strict JSON object with these fields:
 1. tagline: A punchy slogan under 10 words.
-2. bannerConcept: One sentence describing the visual composition for posters.
-3. jingleMood: Description of music genre, energy, and tempo.
-4. videoScene: A 5-8 second scene description including camera angles, lighting, and action.
-5. voiceoverScript: The exact words for the video narration.
+2. bannerConcept: One sentence describing the visual composition for posters, incorporating ${location} context.
+3. jingleMood: Description of music genre, energy, and tempo suited to the ${location} market.
+4. videoScene: A 5-8 second scene description including camera angles, lighting, and action set in ${location}.
+5. voiceoverScript: The exact words for the video narration, written for a ${location} audience.
 6. voiceTone: The specific tone for the voiceover (e.g., warm, bold, energetic, calm).
 
 Ensure the content is visually distinct from competitors and adheres to the color palette.
@@ -34,46 +40,52 @@ export const BANNER_PROMPT = (
     brandName: string,
     bannerConcept: string,
     colors: string[],
-    style: string
+    style: string,
+    location: string
 ) => `
-Professional marketing banner for "${brandName}".
+Professional marketing banner for "${brandName}", a business located in ${location}.
 Concept: ${bannerConcept}
 Style: ${style}
 Colors: Use ${colors.join(', ')} prominently.
+The visual should feel authentic to ${location} — incorporate local environment, architecture, or cultural elements where appropriate.
 High-quality commercial photography style, clean composition, optimized for social media.
 `;
 
 export const VIDEO_SCENE_PROMPT = (
     videoScene: string,
     colors: string[],
-    style: string
+    style: string,
+    location: string
 ) => `
-Cinematic video shot of a product or environment (no people, no faces): ${videoScene}.
+Cinematic video shot of a product or environment set in ${location} (no people, no faces): ${videoScene}.
 Visual Style: ${style}.
 Color Grade: Emphasize ${colors.join(', ')}.
+The setting should reflect ${location} — use authentic local architecture, landscapes, or environments.
 Technical: 4K textures, smooth camera movement, professional lighting, photorealistic.
 Focus on objects, interiors, exteriors, and close-up product shots. No humans or text overlays.
 `;
 
 export const VOICEOVER_PROMPT = (
     script: string,
-    voiceTone: string
+    voiceTone: string,
+    location: string
 ) => `
-Narrate this script with a ${voiceTone} tone:
+Narrate this script with a ${voiceTone} tone for a business in ${location}:
 "${script}"
-Professional commercial quality, clear articulation, natural pacing.
+Professional commercial quality, clear articulation, natural pacing. Deliver it in a way that feels authentic and relatable to a ${location} audience.
 `;
 
 export const JINGLE_PROMPT = (
     brandName: string,
     tagline: string,
     jingleMood: string,
-    industry: string
+    industry: string,
+    location: string
 ) => `
-30-second branded jingle for "${brandName}".
+30-second branded jingle for "${brandName}", a ${industry} business in ${location}.
 Tagline: "${tagline}"
 Mood and Style: ${jingleMood}
-Industry Context: ${industry}
+The music should resonate with the ${location} market — consider regional flavor or energy that fits the area.
 Include original lyrics inspired by the brand and a catchy melody.
 `;
 

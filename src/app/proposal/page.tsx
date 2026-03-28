@@ -171,6 +171,7 @@ function ProposalContent() {
                     styleLock,
                     logoBase64: approvedLogo ?? null,
                     aspectRatio: "16:9",
+                    location: campaign.location || "",
                 }),
             });
             const startData = await startRes.json();
@@ -226,6 +227,7 @@ function ProposalContent() {
                     styleLock,
                     logoBase64: approvedLogo ?? null,
                     brandName: campaign.brandName || "",
+                    location: campaign.location || "",
                 }),
             });
             const data = await res.json();
@@ -254,6 +256,7 @@ function ProposalContent() {
                         brandName: campaign.brandName || "",
                         industry: campaign.industry || "",
                         tagline: p.tagline,
+                        location: campaign.location || "",
                     }),
                 });
                 const data = await res.json();
@@ -302,6 +305,7 @@ function ProposalContent() {
                     body: JSON.stringify({
                         script: p.voiceoverScript,
                         voiceTone: p.voiceTone,
+                        location: campaign.location || "",
                     }),
                 });
                 const data = await res.json();

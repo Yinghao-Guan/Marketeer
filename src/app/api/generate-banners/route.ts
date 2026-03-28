@@ -7,7 +7,7 @@ const ASPECT_RATIOS = ["1:1", "16:9", "9:16"] as const;
 
 export async function POST(req: Request) {
     try {
-        const { bannerConcept, styleLock, logoBase64, brandName } = await req.json();
+        const { bannerConcept, styleLock, logoBase64, brandName, location } = await req.json();
 
         const results = await Promise.all(
             ASPECT_RATIOS.map((aspectRatio) =>
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
                                     ? [{ inlineData: { mimeType: "image/png", data: logoBase64 } }]
                                     : []),
                                 {
-                                    text: BANNER_PROMPT(brandName, bannerConcept, styleLock.colors, styleLock.style),
+                                    text: BANNER_PROMPT(brandName, bannerConcept, styleLock.colors, styleLock.style, location || ""),
                                 },
                             ],
                         },
