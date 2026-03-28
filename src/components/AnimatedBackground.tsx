@@ -1,210 +1,188 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Renderer, Program, Mesh, Triangle, Color } from "ogl";
+import { Renderer, Program, Mesh, Triangle } from "ogl";
 
-const vertexShader = `
-attribute vec2 position;
-attribute vec2 uv;
-varying vec2 vUv;
+function hexToRgb(hex: string): [number, number, number] {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return [1, 1, 1];
+  return [
+    parseInt(result[1], 16) / 255,
+    parseInt(result[2], 16) / 255,
+    parseInt(result[3], 16) / 255,
+  ];
+}
+
+const vertex = `#version 300 es
+in vec2 position;
 void main() {
-  vUv = uv;
   gl_Position = vec4(position, 0.0, 1.0);
 }
 `;
 
-const fragmentShader = `
+const fragment = `#version 300 es
 precision highp float;
-
+uniform vec2 iResolution;
 uniform float iTime;
-uniform vec3 iResolution;
-uniform vec3 uColor;
-uniform float uAmplitude;
-uniform float uDistance;
-uniform vec2 uMouse;
-
-#define PI 3.1415926538
-
-const int u_line_count = 40;
-const float u_line_width = 7.0;
-const float u_line_blur = 10.0;
-
-float Perlin2D(vec2 P) {
-    vec2 Pi = floor(P);
-    vec4 Pf_Pfmin1 = P.xyxy - vec4(Pi, Pi + 1.0);
-    vec4 Pt = vec4(Pi.xy, Pi.xy + 1.0);
-    Pt = Pt - floor(Pt * (1.0 / 71.0)) * 71.0;
-    Pt += vec2(26.0, 161.0).xyxy;
-    Pt *= Pt;
-    Pt = Pt.xzxz * Pt.yyww;
-    vec4 hash_x = fract(Pt * (1.0 / 951.135664));
-    vec4 hash_y = fract(Pt * (1.0 / 642.949883));
-    vec4 grad_x = hash_x - 0.49999;
-    vec4 grad_y = hash_y - 0.49999;
-    vec4 grad_results = inversesqrt(grad_x * grad_x + grad_y * grad_y)
-        * (grad_x * Pf_Pfmin1.xzxz + grad_y * Pf_Pfmin1.yyww);
-    grad_results *= 1.4142135623730950;
-    vec2 blend = Pf_Pfmin1.xy * Pf_Pfmin1.xy * Pf_Pfmin1.xy
-               * (Pf_Pfmin1.xy * (Pf_Pfmin1.xy * 6.0 - 15.0) + 10.0);
-    vec4 blend2 = vec4(blend, vec2(1.0 - blend));
-    return dot(grad_results, blend2.zxzx * blend2.wwyy);
+uniform float uTimeSpeed;
+uniform float uColorBalance;
+uniform float uWarpStrength;
+uniform float uWarpFrequency;
+uniform float uWarpSpeed;
+uniform float uWarpAmplitude;
+uniform float uBlendAngle;
+uniform float uBlendSoftness;
+uniform float uRotationAmount;
+uniform float uNoiseScale;
+uniform float uGrainAmount;
+uniform float uGrainScale;
+uniform float uGrainAnimated;
+uniform float uContrast;
+uniform float uGamma;
+uniform float uSaturation;
+uniform vec2 uCenterOffset;
+uniform float uZoom;
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+uniform vec3 uColor3;
+out vec4 fragColor;
+#define S(a,b,t) smoothstep(a,b,t)
+mat2 Rot(float a){float s=sin(a),c=cos(a);return mat2(c,-s,s,c);}
+vec2 hash(vec2 p){p=vec2(dot(p,vec2(2127.1,81.17)),dot(p,vec2(1269.5,283.37)));return fract(sin(p)*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);float n=mix(mix(dot(-1.0+2.0*hash(i+vec2(0.0,0.0)),f-vec2(0.0,0.0)),dot(-1.0+2.0*hash(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),mix(dot(-1.0+2.0*hash(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),dot(-1.0+2.0*hash(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y);return 0.5+0.5*n;}
+void mainImage(out vec4 o, vec2 C){
+  float t=iTime*uTimeSpeed;
+  vec2 uv=C/iResolution.xy;
+  float ratio=iResolution.x/iResolution.y;
+  vec2 tuv=uv-0.5+uCenterOffset;
+  tuv/=max(uZoom,0.001);
+  float degree=noise(vec2(t*0.1,tuv.x*tuv.y)*uNoiseScale);
+  tuv.y*=1.0/ratio;
+  tuv*=Rot(radians((degree-0.5)*uRotationAmount+180.0));
+  tuv.y*=ratio;
+  float frequency=uWarpFrequency;
+  float ws=max(uWarpStrength,0.001);
+  float amplitude=uWarpAmplitude/ws;
+  float warpTime=t*uWarpSpeed;
+  tuv.x+=sin(tuv.y*frequency+warpTime)/amplitude;
+  tuv.y+=sin(tuv.x*(frequency*1.5)+warpTime)/(amplitude*0.5);
+  vec3 colLav=uColor1;
+  vec3 colOrg=uColor2;
+  vec3 colDark=uColor3;
+  float b=uColorBalance;
+  float s=max(uBlendSoftness,0.0);
+  mat2 blendRot=Rot(radians(uBlendAngle));
+  float blendX=(tuv*blendRot).x;
+  float edge0=-0.3-b-s;
+  float edge1=0.2-b+s;
+  float v0=0.5-b+s;
+  float v1=-0.3-b-s;
+  vec3 layer1=mix(colDark,colOrg,S(edge0,edge1,blendX));
+  vec3 layer2=mix(colOrg,colLav,S(edge0,edge1,blendX));
+  vec3 col=mix(layer1,layer2,S(v0,v1,tuv.y));
+  vec2 grainUv=uv*max(uGrainScale,0.001);
+  if(uGrainAnimated>0.5){grainUv+=vec2(iTime*0.05);}
+  float grain=fract(sin(dot(grainUv,vec2(12.9898,78.233)))*43758.5453);
+  col+=(grain-0.5)*uGrainAmount;
+  col=(col-0.5)*uContrast+0.5;
+  float luma=dot(col,vec3(0.2126,0.7152,0.0722));
+  col=mix(vec3(luma),col,uSaturation);
+  col=pow(max(col,0.0),vec3(1.0/max(uGamma,0.001)));
+  col=clamp(col,0.0,1.0);
+  o=vec4(col,1.0);
 }
-
-float pixel(float count, vec2 resolution) {
-    return (1.0 / max(resolution.x, resolution.y)) * count;
-}
-
-float lineFn(vec2 st, float width, float perc, float offset, vec2 mouse, float time, float amplitude, float distance) {
-    float split_offset = (perc * 0.4);
-    float split_point = 0.1 + split_offset;
-
-    float amplitude_normal = smoothstep(split_point, 0.7, st.x);
-    float amplitude_strength = 0.5;
-    float finalAmplitude = amplitude_normal * amplitude_strength
-                           * amplitude * (1.0 + (mouse.y - 0.5) * 0.2);
-
-    float time_scaled = time / 10.0 + (mouse.x - 0.5) * 1.0;
-    float blur = smoothstep(split_point, split_point + 0.05, st.x) * perc;
-
-    float xnoise = mix(
-        Perlin2D(vec2(time_scaled, st.x + perc) * 2.5),
-        Perlin2D(vec2(time_scaled, st.x + time_scaled) * 3.5) / 1.5,
-        st.x * 0.3
-    );
-
-    float y = 0.5 + (perc - 0.5) * distance + xnoise / 2.0 * finalAmplitude;
-
-    float line_start = smoothstep(
-        y + (width / 2.0) + (u_line_blur * pixel(1.0, iResolution.xy) * blur),
-        y,
-        st.y
-    );
-
-    float line_end = smoothstep(
-        y,
-        y - (width / 2.0) - (u_line_blur * pixel(1.0, iResolution.xy) * blur),
-        st.y
-    );
-
-    return clamp(
-        (line_start - line_end) * (1.0 - smoothstep(0.0, 1.0, pow(perc, 0.3))),
-        0.0,
-        1.0
-    );
-}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    vec2 uv = fragCoord / iResolution.xy;
-
-    float line_strength = 1.0;
-    for (int i = 0; i < u_line_count; i++) {
-        float p = float(i) / float(u_line_count);
-        line_strength *= (1.0 - lineFn(
-            uv,
-            u_line_width * pixel(1.0, iResolution.xy) * (1.0 - p),
-            p,
-            (PI * 1.0) * p,
-            uMouse,
-            iTime,
-            uAmplitude,
-            uDistance
-        ));
-    }
-
-    float colorVal = 1.0 - line_strength;
-    fragColor = vec4(uColor * colorVal, colorVal);
-}
-
-void main() {
-    mainImage(gl_FragColor, gl_FragCoord.xy);
+void main(){
+  vec4 o=vec4(0.0);
+  mainImage(o,gl_FragCoord.xy);
+  fragColor=o;
 }
 `;
 
 export default function AnimatedBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationFrameId = useRef<number>();
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
 
-    const renderer = new Renderer({ alpha: true });
+    const renderer = new Renderer({
+      webgl: 2,
+      alpha: true,
+      antialias: false,
+      dpr: Math.min(window.devicePixelRatio || 1, 2),
+    });
+
     const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    container.appendChild(gl.canvas);
+    const canvas = gl.canvas;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.display = "block";
+    container.appendChild(canvas);
 
     const geometry = new Triangle(gl);
     const program = new Program(gl, {
-      vertex: vertexShader,
-      fragment: fragmentShader,
+      vertex,
+      fragment,
       uniforms: {
         iTime: { value: 0 },
-        iResolution: {
-          value: new Color(
-            gl.canvas.width,
-            gl.canvas.height,
-            gl.canvas.width / gl.canvas.height
-          ),
-        },
-        uColor: { value: new Color(0.5, 0.5, 0.5) },
-        uAmplitude: { value: 1 },
-        uDistance: { value: 0 },
-        uMouse: { value: new Float32Array([0.5, 0.5]) },
+        iResolution: { value: new Float32Array([1, 1]) },
+        uTimeSpeed: { value: 0.4 },
+        uColorBalance: { value: 0.0 },
+        uWarpStrength: { value: 1.5 },
+        uWarpFrequency: { value: 4.0 },
+        uWarpSpeed: { value: 3.0 },
+        uWarpAmplitude: { value: 30.0 },
+        uBlendAngle: { value: 45.0 },
+        uBlendSoftness: { value: 0.1 },
+        uRotationAmount: { value: 600.0 },
+        uNoiseScale: { value: 2.5 },
+        uGrainAmount: { value: 0.08 },
+        uGrainScale: { value: 2.0 },
+        uGrainAnimated: { value: 1.0 },
+        uContrast: { value: 1.4 },
+        uGamma: { value: 1.0 },
+        uSaturation: { value: 1.1 },
+        uCenterOffset: { value: new Float32Array([0, 0]) },
+        uZoom: { value: 0.8 },
+        uColor1: { value: new Float32Array(hexToRgb("#0c2d4e")) },
+        uColor2: { value: new Float32Array(hexToRgb("#c8a820")) },
+        uColor3: { value: new Float32Array(hexToRgb("#14375a")) },
       },
     });
 
     const mesh = new Mesh(gl, { geometry, program });
 
-    function resize() {
-      const { clientWidth, clientHeight } = container;
-      renderer.setSize(clientWidth, clientHeight);
-      program.uniforms.iResolution.value.r = clientWidth;
-      program.uniforms.iResolution.value.g = clientHeight;
-      program.uniforms.iResolution.value.b = clientWidth / clientHeight;
-    }
-    window.addEventListener("resize", resize);
-    resize();
-
-    const currentMouse = [0.5, 0.5];
-    const targetMouse = [0.5, 0.5];
-
-    function handleMouseMove(e: MouseEvent) {
+    function setSize() {
       const rect = container.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = 1.0 - (e.clientY - rect.top) / rect.height;
-      targetMouse[0] = x;
-      targetMouse[1] = y;
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      renderer.setSize(width, height);
+      const res = program.uniforms.iResolution.value as Float32Array;
+      res[0] = gl.drawingBufferWidth;
+      res[1] = gl.drawingBufferHeight;
     }
-    function handleMouseLeave() {
-      targetMouse[0] = 0.5;
-      targetMouse[1] = 0.5;
-    }
-    container.addEventListener("mousemove", handleMouseMove);
-    container.addEventListener("mouseleave", handleMouseLeave);
 
-    function update(t: number) {
-      const smoothing = 0.05;
-      currentMouse[0] += smoothing * (targetMouse[0] - currentMouse[0]);
-      currentMouse[1] += smoothing * (targetMouse[1] - currentMouse[1]);
-      program.uniforms.uMouse.value[0] = currentMouse[0];
-      program.uniforms.uMouse.value[1] = currentMouse[1];
-      program.uniforms.iTime.value = t * 0.001;
+    const ro = new ResizeObserver(setSize);
+    ro.observe(container);
+    setSize();
 
+    let raf = 0;
+    const t0 = performance.now();
+    function loop(t: number) {
+      program.uniforms.iTime.value = (t - t0) * 0.001;
       renderer.render({ scene: mesh });
-      animationFrameId.current = requestAnimationFrame(update);
+      raf = requestAnimationFrame(loop);
     }
-    animationFrameId.current = requestAnimationFrame(update);
+    raf = requestAnimationFrame(loop);
 
     return () => {
-      if (animationFrameId.current)
-        cancelAnimationFrame(animationFrameId.current);
-      window.removeEventListener("resize", resize);
-      container.removeEventListener("mousemove", handleMouseMove);
-      container.removeEventListener("mouseleave", handleMouseLeave);
-      if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      try {
+        container.removeChild(canvas);
+      } catch {
+        // Ignore
+      }
     };
   }, []);
 
