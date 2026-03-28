@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
+import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
 type Phase = "loading" | "generating-logo" | "analyzing" | "ready" | "error";
@@ -105,7 +107,7 @@ export default function RatingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Apply improvement ──────────────────────────────────
+  // ── Apply improvement ───���──────────────────────────────
   const handleApplyImprovement = async (index: number) => {
     if (!rating || !logoBase64) return;
     setApplyingIndex(index);
@@ -154,7 +156,7 @@ export default function RatingPage() {
     }
   };
 
-  // ── Approve & continue ─────────────────────────────────
+  // ── Approve & continue ────────────��────────────────────
   const handleApprove = () => {
     saveCampaignData({ approvedLogo: logoBase64 });
 
@@ -170,12 +172,17 @@ export default function RatingPage() {
     router.push("/proposal");
   };
 
-  // ── Render ─────────────────────────────────────────────
+  // ── Render ──────��─────────────────────��────────────────
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-center mb-2">Logo Rating</h1>
-        <p className="text-neutral-400 text-center mb-8">
+    <main className="min-h-screen text-white">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="max-w-2xl mx-auto px-4 py-12"
+      >
+        <motion.h1 variants={staggerChild} className="text-3xl font-bold text-center mb-2">Logo Rating</motion.h1>
+        <motion.p variants={staggerChild} className="text-white/50 text-center mb-8">
           {phase === "generating-logo"
             ? "Generating your logo..."
             : phase === "analyzing"
@@ -183,15 +190,15 @@ export default function RatingPage() {
               : phase === "ready"
                 ? "Here's how your logo performs across formats"
                 : ""}
-        </p>
+        </motion.p>
 
         {/* Loading / generating states */}
         {(phase === "loading" ||
           phase === "generating-logo" ||
           phase === "analyzing") && (
           <div className="flex flex-col items-center gap-4 py-16">
-            <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <p className="text-neutral-400 text-sm">
+            <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
+            <p className="text-white/50 text-sm">
               {phase === "generating-logo"
                 ? "Creating a logo for your brand..."
                 : "Running marketing analysis..."}
@@ -205,7 +212,7 @@ export default function RatingPage() {
             <p className="text-red-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+              className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
             >
               Retry
             </button>
@@ -216,8 +223,8 @@ export default function RatingPage() {
         {phase === "ready" && rating && (
           <>
             {/* Logo preview */}
-            <div className="flex justify-center mb-8">
-              <div className="w-48 h-48 rounded-2xl border border-neutral-800 bg-neutral-900 overflow-hidden flex items-center justify-center">
+            <motion.div variants={staggerChild} className="flex justify-center mb-8">
+              <div className="glass-card w-48 h-48 overflow-hidden flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/png;base64,${logoBase64}`}
@@ -225,28 +232,30 @@ export default function RatingPage() {
                   className="max-w-full max-h-full object-contain"
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* Rating details */}
-            <RatingCard
-              rating={rating}
-              onApplyImprovement={handleApplyImprovement}
-              applyingIndex={applyingIndex}
-            />
+            <motion.div variants={staggerChild}>
+              <RatingCard
+                rating={rating}
+                onApplyImprovement={handleApplyImprovement}
+                applyingIndex={applyingIndex}
+              />
+            </motion.div>
 
             {/* Approve button */}
-            <div className="mt-8 flex justify-center">
+            <motion.div variants={staggerChild} className="mt-8 flex justify-center">
               <button
                 onClick={handleApprove}
-                className="px-8 py-3 rounded-xl bg-white text-black font-semibold text-lg
-                  hover:bg-neutral-200 transition-colors"
+                className="px-8 py-3 rounded-full bg-white text-black font-semibold text-lg
+                  hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
               >
                 Approve &amp; Continue
               </button>
-            </div>
+            </motion.div>
           </>
         )}
-      </div>
+      </motion.div>
     </main>
   );
 }

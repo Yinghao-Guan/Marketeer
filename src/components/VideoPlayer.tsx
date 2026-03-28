@@ -134,7 +134,7 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
           onClick={togglePlay}
           disabled={!videoUrl}
           aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
         >
           {isPlaying ? (
             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -157,9 +157,9 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
             value={currentTime}
             onChange={handleSeek}
             disabled={!videoUrl}
-            className="w-full h-1.5 rounded-full accent-indigo-400 disabled:opacity-40 cursor-pointer"
+            className="w-full h-1.5 rounded-full accent-[#5227FF] disabled:opacity-40 cursor-pointer"
             style={{
-              background: `linear-gradient(to right, #818cf8 ${progress * 100}%, rgba(255,255,255,0.15) ${progress * 100}%)`,
+              background: `linear-gradient(to right, #5227FF ${progress * 100}%, rgba(255,255,255,0.15) ${progress * 100}%)`,
             }}
           />
           <div className="flex justify-between text-[11px] text-white/40 tabular-nums">

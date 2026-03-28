@@ -94,7 +94,7 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
           onClick={togglePlay}
           disabled={!objectUrl}
           aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
         >
           {isPlaying ? (
             /* Pause icon */
@@ -120,9 +120,9 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
             value={currentTime}
             onChange={handleSeek}
             disabled={!objectUrl}
-            className="w-full h-1.5 rounded-full accent-indigo-400 disabled:opacity-40 cursor-pointer"
+            className="w-full h-1.5 rounded-full accent-[#5227FF] disabled:opacity-40 cursor-pointer"
             style={{
-              background: `linear-gradient(to right, #818cf8 ${progress * 100}%, rgba(255,255,255,0.15) ${progress * 100}%)`,
+              background: `linear-gradient(to right, #5227FF ${progress * 100}%, rgba(255,255,255,0.15) ${progress * 100}%)`,
             }}
           />
           <div className="flex justify-between text-[11px] text-white/40 tabular-nums">

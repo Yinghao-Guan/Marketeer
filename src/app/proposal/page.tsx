@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import StepWizard from "@/components/StepWizard";
+import { staggerContainer, staggerChild } from "@/lib/motion";
 
 interface Proposal {
   tagline: string;
@@ -99,20 +101,25 @@ export default function ProposalPage() {
   return (
     <StepWizard>
       <div className="flex flex-col flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-2xl space-y-6">
-          <div className="text-center">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-2xl space-y-6"
+        >
+          <motion.div variants={staggerChild} className="text-center">
             <h1 className="text-3xl font-bold text-white">Campaign Proposal</h1>
-            <p className="mt-2 text-neutral-400">
+            <p className="mt-2 text-white/50">
               {phase === "loading" || phase === "revising"
                 ? "Crafting your creative brief..."
                 : "Review your campaign before we generate everything"}
             </p>
-          </div>
+          </motion.div>
 
           {(phase === "loading" || phase === "revising") && (
             <div className="flex flex-col items-center gap-4 py-16">
-              <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <p className="text-neutral-400 text-sm">
+              <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
+              <p className="text-white/50 text-sm">
                 {phase === "revising"
                   ? "Revising your proposal..."
                   : "Generating creative brief..."}
@@ -128,7 +135,7 @@ export default function ProposalPage() {
                   setPhase("loading");
                   fetchProposal();
                 }}
-                className="px-6 py-2 rounded-lg bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
               >
                 Retry
               </button>
@@ -139,8 +146,8 @@ export default function ProposalPage() {
             <>
               {/* Logo */}
               {logoBase64 && (
-                <div className="flex justify-center">
-                  <div className="w-32 h-32 rounded-2xl border border-neutral-700 bg-neutral-900 overflow-hidden flex items-center justify-center">
+                <motion.div variants={staggerChild} className="flex justify-center">
+                  <div className="glass-card w-32 h-32 overflow-hidden flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`data:image/png;base64,${logoBase64}`}
@@ -148,37 +155,37 @@ export default function ProposalPage() {
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {/* Tagline */}
-              <div className="rounded-2xl bg-neutral-900 p-6 border border-neutral-800 text-center">
-                <p className="text-xs text-neutral-500 uppercase tracking-wider font-semibold mb-2">
+              <motion.div variants={staggerChild} className="glass-card p-6 text-center">
+                <p className="text-[13px] text-white/40 uppercase tracking-[0.15em] font-light mb-2">
                   Tagline
                 </p>
                 <p className="text-2xl font-bold text-white">
                   &ldquo;{proposal.tagline}&rdquo;
                 </p>
-              </div>
+              </motion.div>
 
               {/* Color Palette */}
               {colors.length > 0 && (
-                <div className="rounded-2xl bg-neutral-900 p-6 border border-neutral-800">
-                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-semibold mb-3">
+                <motion.div variants={staggerChild} className="glass-card p-6">
+                  <p className="text-[13px] text-white/40 uppercase tracking-[0.15em] font-light mb-3">
                     Color Palette
                   </p>
                   <div className="flex gap-3">
                     {colors.map((color: string, i: number) => (
                       <div key={i} className="flex flex-col items-center gap-1">
                         <div
-                          className="w-12 h-12 rounded-lg border border-neutral-700"
+                          className="w-12 h-12 rounded-lg border border-white/10"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-xs text-neutral-400 font-mono">{color}</span>
+                        <span className="text-xs text-white/50 font-mono">{color}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {/* Brief Sections */}
@@ -191,35 +198,37 @@ export default function ProposalPage() {
               </div>
 
               {/* Revision */}
-              <div className="rounded-2xl bg-neutral-900 p-6 border border-neutral-800 space-y-3">
-                <p className="text-xs text-neutral-500 uppercase tracking-wider font-semibold">
+              <motion.div variants={staggerChild} className="glass-card p-6 space-y-3">
+                <p className="text-[13px] text-white/40 uppercase tracking-[0.15em] font-light">
                   Want changes?
                 </p>
                 <textarea
                   value={revisionText}
                   onChange={(e) => setRevisionText(e.target.value)}
                   placeholder="e.g. Make the tagline more playful, change the jingle to something upbeat..."
-                  className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3 text-white placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none resize-none h-20"
+                  className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none resize-none h-20"
                 />
                 <button
                   onClick={handleRevise}
                   disabled={!revisionText.trim()}
-                  className="w-full py-2 rounded-lg border border-neutral-600 text-white font-medium transition-colors hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-full py-2 rounded-full border border-white/10 text-white font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Revise Proposal
                 </button>
-              </div>
+              </motion.div>
 
               {/* Approve */}
-              <button
-                onClick={handleApprove}
-                className="w-full py-4 rounded-xl bg-white text-black font-semibold text-lg transition-colors hover:bg-neutral-200"
-              >
-                Looks good, generate it all
-              </button>
+              <motion.div variants={staggerChild}>
+                <button
+                  onClick={handleApprove}
+                  className="w-full py-4 rounded-full bg-white text-black font-semibold text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
+                >
+                  Looks good, generate it all
+                </button>
+              </motion.div>
             </>
           )}
-        </div>
+        </motion.div>
       </div>
     </StepWizard>
   );
@@ -227,11 +236,11 @@ export default function ProposalPage() {
 
 function BriefSection({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-2xl bg-neutral-900 p-6 border border-neutral-800">
-      <p className="text-xs text-neutral-500 uppercase tracking-wider font-semibold mb-2">
+    <motion.div variants={staggerChild} className="glass-card p-6">
+      <p className="text-[13px] text-white/40 uppercase tracking-[0.15em] font-light mb-2">
         {title}
       </p>
       <p className="text-white">{text}</p>
-    </div>
+    </motion.div>
   );
 }

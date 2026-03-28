@@ -1,21 +1,29 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import StepWizard from "@/components/StepWizard";
+import { motion, AnimatePresence } from "framer-motion";
+import { EASE_SMOOTH } from "@/lib/motion";
 
-export default function CompetitorsPage() {
-  const router = useRouter();
-  const [images, setImages] = useState<string[]>([]);
+interface CompetitorSectionProps {
+  isActive: boolean;
+  images: string[];
+  onComplete: (images: string[]) => void;
+}
+
+const fade = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.3, ease: EASE_SMOOTH } },
+  exit: { opacity: 0, transition: { duration: 0.2, ease: EASE_SMOOTH } },
+};
+
+export default function CompetitorSection({
+  isActive,
+  images: savedImages,
+  onComplete,
+}: CompetitorSectionProps) {
+  const [images, setImages] = useState<string[]>(savedImages);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleNext = () => {
-    const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
-    const competitorLogos = images.map((f) => f.split(",")[1]);
-    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, competitorLogos }));
-    router.push("/onboarding/location");
-  };
 
   const addFiles = useCallback((fileList: FileList) => {
     const imageFiles = Array.from(fileList).filter((f) =>
@@ -48,22 +56,20 @@ export default function CompetitorsPage() {
   };
 
   return (
-    <StepWizard>
-      <div className="flex flex-col flex-1 items-center justify-center px-4">
-        <div className="w-full max-w-lg space-y-6 rounded-2xl bg-white/5 p-8 backdrop-blur-sm ring-1 ring-white/10">
+    <AnimatePresence mode="wait">
+      {isActive ? (
+        <motion.div key="active" {...fade} className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              Upload competitor material
+              Competitor material
             </h2>
             <p className="mt-1 text-white/50">
               Logos, flyers, or photos — we&apos;ll make sure your brand stands
-              apart. The more you upload, the better we can evaluate your market
-              position.
+              apart.
             </p>
           </div>
 
-          <div className="flex gap-3 items-start">
-            {/* Uploaded images */}
+          <div className="flex gap-3 items-start flex-wrap">
             {images.map((src, i) => (
               <div
                 key={i}
@@ -83,7 +89,6 @@ export default function CompetitorsPage() {
               </div>
             ))}
 
-            {/* Upload box */}
             <div
               onClick={() => inputRef.current?.click()}
               onDrop={handleDrop}
@@ -94,7 +99,7 @@ export default function CompetitorsPage() {
               onDragLeave={() => setIsDragging(false)}
               className={`flex h-28 flex-1 min-w-[7rem] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
                 isDragging
-                  ? "border-white bg-white/10"
+                  ? "border-[#5227FF] bg-[#5227FF]/10"
                   : "border-white/20 hover:border-white/40"
               }`}
             >
@@ -119,14 +124,54 @@ export default function CompetitorsPage() {
             />
           </div>
 
-          <button
-            onClick={handleNext}
-            className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
-          >
-            {images.length > 0 ? "Continue" : "Skip"}
-          </button>
-        </div>
-      </div>
-    </StepWizard>
+          <div className="flex gap-3">
+            <button
+              onClick={() => onComplete([])}
+              className="flex-1 rounded-full border border-white/20 py-3 text-center font-medium text-white/60 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/40 hover:text-white active:scale-[0.98]"
+            >
+              Skip
+            </button>
+            <button
+              onClick={() => onComplete(images)}
+              className="flex-1 rounded-full bg-white py-3 text-center font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
+            >
+              Continue
+            </button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="completed"
+          {...fade}
+          className="flex items-center gap-4"
+        >
+          {savedImages.length > 0 ? (
+            <>
+              <div className="flex -space-x-3">
+                {savedImages.slice(0, 3).map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-black/50"
+                  />
+                ))}
+              </div>
+              <div>
+                <p className="text-base font-semibold text-white">
+                  {savedImages.length} competitor{savedImages.length !== 1 && "s"}
+                </p>
+                <p className="text-sm text-white/40">Click to edit</p>
+              </div>
+            </>
+          ) : (
+            <div>
+              <p className="text-base font-semibold text-white/50">Competitors</p>
+              <p className="text-sm text-white/40">Skipped — click to add</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

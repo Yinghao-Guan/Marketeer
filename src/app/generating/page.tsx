@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { fadeBlur, EASE_SMOOTH } from "@/lib/motion";
 
 type Stage =
   | "banners-intro"
@@ -33,6 +34,8 @@ const STAGE_ORDER: Stage[] = [
   "done",
 ];
 
+const ACCENT_COLORS = ["#5227FF", "#FF9FFC", "#B19EEF"];
+
 export default function GeneratingPage() {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("banners-intro");
@@ -60,7 +63,7 @@ export default function GeneratingPage() {
   }, [stage]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 overflow-hidden">
+    <div className="min-h-screen text-white flex flex-col items-center justify-center px-4 overflow-hidden">
       <AnimatePresence mode="wait">
         {/* ── Banners Intro ── */}
         {stage === "banners-intro" && (
@@ -71,18 +74,19 @@ export default function GeneratingPage() {
         {stage === "banners-show" && (
           <motion.div
             key="banners-show"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-4xl"
+            variants={fadeBlur}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, y: -40, filter: "blur(8px)" }}
+            custom={0}
+            className="w-full max-w-4xl gpu-layer"
           >
             <div className="grid grid-cols-3 gap-4">
               <PlaceholderBanner label="1:1 Square" aspect="aspect-square" />
               <PlaceholderBanner label="16:9 Landscape" aspect="aspect-video" />
               <PlaceholderBanner label="9:16 Portrait" aspect="aspect-[9/16]" />
             </div>
-            <p className="text-center text-neutral-500 text-sm mt-4">
+            <p className="text-center text-white/40 text-sm mt-4">
               {proposal?.bannerConcept || "Banner designs based on your brand"}
             </p>
           </motion.div>
@@ -97,23 +101,24 @@ export default function GeneratingPage() {
         {stage === "video-show" && (
           <motion.div
             key="video-show"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-2xl"
+            variants={fadeBlur}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, y: -40, filter: "blur(8px)" }}
+            custom={0}
+            className="w-full max-w-2xl gpu-layer"
           >
-            <div className="aspect-video rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+            <div className="glass-card aspect-video flex items-center justify-center">
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-neutral-800 flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-white/10 flex items-center justify-center">
                   <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
-                <p className="text-neutral-400 text-sm">Video ad preview</p>
+                <p className="text-white/50 text-sm">Video ad preview</p>
               </div>
             </div>
-            <p className="text-center text-neutral-500 text-sm mt-4">
+            <p className="text-center text-white/40 text-sm mt-4">
               {proposal?.videoScene || "Your brand story in motion"}
             </p>
           </motion.div>
@@ -128,19 +133,21 @@ export default function GeneratingPage() {
         {stage === "jingle-show" && (
           <motion.div
             key="jingle-show"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-md"
+            variants={fadeBlur}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, y: -40, filter: "blur(8px)" }}
+            custom={0}
+            className="w-full max-w-md gpu-layer"
           >
-            <div className="rounded-2xl bg-neutral-900 border border-neutral-800 p-8 flex flex-col items-center gap-4">
+            <div className="glass-card p-8 flex flex-col items-center gap-4">
               {/* Waveform placeholder */}
               <div className="flex items-end gap-1 h-16">
                 {Array.from({ length: 32 }).map((_, i) => (
                   <motion.div
                     key={i}
-                    className="w-1.5 bg-white rounded-full"
+                    className="w-1.5 rounded-full"
+                    style={{ backgroundColor: ACCENT_COLORS[i % 3] }}
                     initial={{ height: 8 }}
                     animate={{ height: Math.random() * 48 + 16 }}
                     transition={{
@@ -152,9 +159,9 @@ export default function GeneratingPage() {
                   />
                 ))}
               </div>
-              <p className="text-neutral-400 text-sm">Jingle preview</p>
+              <p className="text-white/50 text-sm">Jingle preview</p>
             </div>
-            <p className="text-center text-neutral-500 text-sm mt-4">
+            <p className="text-center text-white/40 text-sm mt-4">
               {proposal?.jingleMood || "Your brand's sound"}
             </p>
           </motion.div>
@@ -164,10 +171,11 @@ export default function GeneratingPage() {
         {stage === "done" && (
           <motion.div
             key="done"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-6"
+            variants={fadeBlur}
+            initial="hidden"
+            animate="visible"
+            custom={0}
+            className="text-center space-y-6 gpu-layer"
           >
             <div className="w-20 h-20 mx-auto rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
               <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -176,13 +184,13 @@ export default function GeneratingPage() {
             </div>
             <div>
               <h2 className="text-3xl font-bold text-white">Your campaign is ready</h2>
-              <p className="mt-2 text-neutral-400">
+              <p className="mt-2 text-white/50">
                 All your assets have been generated. Head to the dashboard to review and download.
               </p>
             </div>
             <button
               onClick={() => router.push("/dashboard")}
-              className="px-10 py-4 rounded-xl bg-white text-black font-semibold text-lg transition-colors hover:bg-neutral-200"
+              className="px-10 py-4 rounded-full bg-white text-black font-semibold text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
             >
               Continue to Dashboard
             </button>
@@ -195,11 +203,12 @@ export default function GeneratingPage() {
         <div className="fixed bottom-8 flex gap-2">
           {["banners", "video", "jingle"].map((section, i) => {
             const sectionIndex = Math.floor(STAGE_ORDER.indexOf(stage) / 2);
+            const isActive = i <= sectionIndex;
             return (
               <div
                 key={section}
-                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  i <= sectionIndex ? "bg-white" : "bg-neutral-700"
+                className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                  isActive ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "bg-white/20"
                 }`}
               />
             );
@@ -213,28 +222,28 @@ export default function GeneratingPage() {
 function IntroCard({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.5 }}
-      className="text-center"
+      initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: -24, filter: "blur(8px)" }}
+      transition={{ duration: 0.8, ease: EASE_SMOOTH }}
+      className="text-center gpu-layer"
     >
       <h2 className="text-4xl font-bold text-white">{title}</h2>
-      <p className="mt-2 text-neutral-400 text-lg">{subtitle}</p>
+      <p className="mt-2 text-white/50 text-lg">{subtitle}</p>
     </motion.div>
   );
 }
 
 function PlaceholderBanner({ label, aspect }: { label: string; aspect: string }) {
   return (
-    <div className={`${aspect} rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center`}>
+    <div className={`${aspect} glass-card flex items-center justify-center`}>
       <div className="text-center px-2">
-        <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-neutral-800 flex items-center justify-center">
-          <svg className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-white/10 flex items-center justify-center">
+          <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
           </svg>
         </div>
-        <p className="text-neutral-500 text-xs">{label}</p>
+        <p className="text-white/40 text-xs">{label}</p>
       </div>
     </div>
   );

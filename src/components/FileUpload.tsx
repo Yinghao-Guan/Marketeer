@@ -75,7 +75,7 @@ export default function FileUpload({
         onDragLeave={() => setIsDragging(false)}
         className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
           isDragging
-            ? "border-white bg-white/10"
+            ? "border-[#5227FF] bg-[#5227FF]/10"
             : "border-white/20 hover:border-white/40"
         }`}
       >
