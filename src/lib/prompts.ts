@@ -98,6 +98,31 @@ The music should resonate with the ${location} market — consider regional flav
 Include original lyrics inspired by the brand and a catchy melody.
 `;
 
+// ── Lyrics transcription ────────────────────────────────────────────────────────
+
+export const TRANSCRIBE_LYRICS_PROMPT = `You are a precise audio transcription tool. Listen to this music/jingle audio and transcribe the sung lyrics with word-level timing.
+
+Return a JSON array of lyric lines. Each line contains an array of words with their start and end timestamps in milliseconds.
+
+Rules:
+- Only transcribe words that are actually sung. Do not include instrumental sections.
+- Timestamps must be in milliseconds from the start of the audio.
+- Each word's endTime should equal or precede the next word's startTime.
+- If there are no lyrics (purely instrumental), return an empty array [].
+- Return ONLY valid JSON, no markdown fencing, no explanation.
+
+Format:
+[
+  {
+    "words": [
+      { "word": "hello", "startTime": 1000, "endTime": 1400 },
+      { "word": "world", "startTime": 1400, "endTime": 2000 }
+    ],
+    "startTime": 1000,
+    "endTime": 2000
+  }
+]`;
+
 // ── Person 2 prompts: Logo analysis, generation, improvement, style description ──
 
 export function ANALYZE_LOGO_PROMPT(industry: string, location: string) {

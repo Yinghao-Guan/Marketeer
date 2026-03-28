@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { saveCampaign, updateCampaign, getCampaign as getCampaignFromDB, type Banner } from "@/lib/store";
+import { saveCampaign, updateCampaign, getCampaign as getCampaignFromDB, type Banner, type LyricsData } from "@/lib/store";
 import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 import ProposalCard from "@/components/ProposalCard";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -78,6 +78,7 @@ function ProposalContent() {
         voiceover: string | undefined;
     } | null>(null);
     const generatingStarted = useRef(false);
+    const lyricsRef = useRef<LyricsData | null>(null);
 
     const getCampaign = useCallback(() => {
         if (typeof window === "undefined") return null;
@@ -267,6 +268,19 @@ function ProposalContent() {
                 if (!res.ok) throw new Error(data.error ?? "Jingle generation failed");
                 setGeneratedJingle(data.audioBase64);
                 setStep(1, "done");
+
+                // fire-and-forget lyrics transcription
+                fetch("/api/transcribe-lyrics", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ audioBase64: data.audioBase64, mimeType: data.mimeType }),
+                })
+                    .then((r) => r.json())
+                    .then((d) => {
+                        if (d.lines?.length) lyricsRef.current = { lines: d.lines };
+                    })
+                    .catch((e) => console.warn("lyrics transcription failed:", e));
+
                 return data.audioBase64 as string;
             } catch (e) {
                 setStep(1, "error");
@@ -396,6 +410,7 @@ function ProposalContent() {
             jingleMood: (campaign.jingleMood as string) ?? "upbeat",
             banners,
             jingle: jingle ?? "",
+            lyrics: lyricsRef.current ?? undefined,
             video: videoBase64 ?? "",
             voiceover: voiceover ?? "",
             finalVideo: finalVideo ?? "",

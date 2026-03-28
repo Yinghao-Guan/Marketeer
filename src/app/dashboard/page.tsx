@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import JSZip from "jszip";
 import AssetCard from "@/components/AssetCard";
 import AudioPlayer from "@/components/AudioPlayer";
+import LyricsPlayer from "@/components/LyricsPlayer";
 import VideoPlayer from "@/components/VideoPlayer";
 import {
   initDB,
@@ -213,6 +214,23 @@ function DashboardContent() {
       const jingle = `data:${mime};base64,${data.audioBase64}`;
       await updateCampaign(campaign.id, { jingle });
       setCampaign((c) => c && { ...c, jingle });
+
+      // transcribe lyrics for the new jingle
+      try {
+        const lyricsRes = await fetch("/api/transcribe-lyrics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioBase64: data.audioBase64, mimeType: mime }),
+        });
+        const lyricsData = await lyricsRes.json();
+        if (lyricsData.lines?.length) {
+          const lyrics = { lines: lyricsData.lines };
+          await updateCampaign(campaign.id, { lyrics });
+          setCampaign((c) => c && { ...c, lyrics });
+        }
+      } catch (e) {
+        console.warn("lyrics transcription failed:", e);
+      }
     } catch (e) {
       console.error("Jingle regeneration failed:", e);
     } finally {
@@ -478,6 +496,29 @@ function DashboardContent() {
           </div>
         </motion.div>
 
+        {/* ── Brand Overview ── */}
+        {(campaign.approvedLogo || campaign.description) && (
+          <motion.section variants={staggerChild} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-2xl border border-white/10 bg-white/[0.03]">
+            {campaign.approvedLogo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`data:image/png;base64,${campaign.approvedLogo}`}
+                alt={`${campaign.brandName} logo`}
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-contain bg-white/10 p-3 flex-shrink-0"
+              />
+            )}
+            <div className="flex flex-col justify-center gap-2 text-center sm:text-left">
+              <h2 className="text-lg font-semibold text-white">{campaign.brandName}</h2>
+              {campaign.description ? (
+                <p className="text-white/60 text-sm leading-relaxed max-w-prose">{campaign.description}</p>
+              ) : (
+                <p className="text-white/30 text-sm italic">no description provided</p>
+              )}
+              <p className="text-white/30 text-xs mt-1">{campaign.industry} · {campaign.location}</p>
+            </div>
+          </motion.section>
+        )}
+
         {/* ── Tagline & Script ── */}
         <motion.section variants={staggerChild} className="flex flex-col gap-3">
           <p className="text-xl sm:text-3xl font-bold leading-snug">
@@ -601,7 +642,7 @@ function DashboardContent() {
             onDownload={campaign.jingle ? () => triggerDownload(campaign.jingle!, "audio/wav", "jingle.wav") : undefined}
           >
             {campaign.jingle ? (
-              <AudioPlayer src={campaign.jingle} />
+              <LyricsPlayer src={campaign.jingle} lyrics={campaign.lyrics} />
             ) : (
               <p className="text-white/30 text-sm">no jingle generated</p>
             )}
