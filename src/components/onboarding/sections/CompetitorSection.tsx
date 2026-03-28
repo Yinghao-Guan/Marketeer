@@ -61,10 +61,10 @@ export default function CompetitorSection({
         <motion.div key="active" {...fade} className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              Competitor material
+              competitor material
             </h2>
             <p className="mt-1 text-white/50">
-              Logos, flyers, or photos — we&apos;ll make sure your brand stands
+              logos, flyers, or photos - we&apos;ll make sure your brand stands
               apart.
             </p>
           </div>
@@ -105,7 +105,7 @@ export default function CompetitorSection({
             >
               <span className="text-2xl text-white/40">+</span>
               <span className="mt-1 text-xs text-white/40">
-                {images.length === 0 ? "Add image" : "Add another"}
+                {images.length === 0 ? "add image" : "add another"}
               </span>
             </div>
 
@@ -129,13 +129,13 @@ export default function CompetitorSection({
               onClick={() => onComplete([])}
               className="flex-1 rounded-full border border-white/20 py-3 text-center font-medium text-white/60 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-white/40 hover:text-white active:scale-[0.98]"
             >
-              Skip
+              skip
             </button>
             <button
               onClick={() => onComplete(images)}
               className="flex-1 rounded-full bg-white py-3 text-center font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
             >
-              Continue
+              continue
             </button>
           </div>
         </motion.div>
@@ -161,13 +161,13 @@ export default function CompetitorSection({
                 <p className="text-base font-semibold text-white">
                   {savedImages.length} competitor{savedImages.length !== 1 && "s"}
                 </p>
-                <p className="text-sm text-white/40">Click to edit</p>
+                <p className="text-sm text-white/40">click to edit</p>
               </div>
             </>
           ) : (
             <div>
-              <p className="text-base font-semibold text-white/50">Competitors</p>
-              <p className="text-sm text-white/40">Skipped — click to add</p>
+              <p className="text-base font-semibold text-white/50">competitors</p>
+              <p className="text-sm text-white/40">skipped - click to add</p>
             </div>
           )}
         </motion.div>

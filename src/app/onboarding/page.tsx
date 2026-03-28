@@ -10,6 +10,7 @@ import CompetitorSection from "@/components/onboarding/sections/CompetitorSectio
 import LocationSection from "@/components/onboarding/sections/LocationSection";
 import IndustrySection from "@/components/onboarding/sections/IndustrySection";
 import { puzzleEnter, puzzleSpring, fadeBlur, EASE_SMOOTH } from "@/lib/motion";
+import { saveCampaign } from "@/lib/store";
 
 /* ── State ── */
 
@@ -19,6 +20,7 @@ interface State {
   currentStep: Step;
   highestStep: Step;
   logo: string | null;
+  logoSkipped: boolean;
   competitorImages: string[];
   location: string;
   industry: string;
@@ -26,6 +28,7 @@ interface State {
 
 type Action =
   | { type: "COMPLETE_LOGO"; logo: string }
+  | { type: "SKIP_LOGO" }
   | { type: "COMPLETE_COMPETITORS"; images: string[] }
   | { type: "COMPLETE_LOCATION"; location: string }
   | { type: "COMPLETE_INDUSTRY"; industry: string }
@@ -35,6 +38,7 @@ const initialState: State = {
   currentStep: 0,
   highestStep: 0,
   logo: null,
+  logoSkipped: false,
   competitorImages: [],
   location: "",
   industry: "",
@@ -51,7 +55,11 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "COMPLETE_LOGO": {
       const step = nextStep(state, 1);
-      return { ...state, currentStep: step, highestStep: Math.max(state.highestStep, step) as Step, logo: action.logo };
+      return { ...state, currentStep: step, highestStep: Math.max(state.highestStep, step) as Step, logo: action.logo, logoSkipped: false };
+    }
+    case "SKIP_LOGO": {
+      const step = nextStep(state, 1);
+      return { ...state, currentStep: step, highestStep: Math.max(state.highestStep, step) as Step, logo: null, logoSkipped: true };
     }
     case "COMPLETE_COMPETITORS": {
       const step = nextStep(state, 2);
@@ -82,28 +90,44 @@ export default function OnboardingPage() {
   const { currentStep } = state;
   const isAssembled = currentStep === 4;
 
-  const handleGenerate = () => {
-    const current = JSON.parse(
-      sessionStorage.getItem("marketeer-campaign") || "{}"
-    );
+  const handleGenerate = async () => {
+    const id = `campaign-${Date.now()}`;
+    const campaignData = {
+      hasLogo: state.logo !== null,
+      userLogo: state.logo?.split(",")[1] ?? null,
+      competitorLogos: state.competitorImages.map((f) => f.split(",")[1]),
+      location: state.location,
+      industry: state.industry,
+    };
+
     sessionStorage.setItem(
       "marketeer-campaign",
-      JSON.stringify({
-        ...current,
-        userLogo: state.logo?.split(",")[1] ?? null,
-        competitorLogos: state.competitorImages.map((f) => f.split(",")[1]),
-        location: state.location,
-        industry: state.industry,
-      })
+      JSON.stringify({ ...campaignData, id })
     );
+
+    // Persist to IndexedDB so it shows in history
+    await saveCampaign({
+      id,
+      createdAt: new Date(),
+      hasLogo: campaignData.hasLogo,
+      userLogo: campaignData.userLogo,
+      competitorLogos: campaignData.competitorLogos,
+      location: campaignData.location,
+      industry: campaignData.industry,
+      brandName: "",
+      currentStep: "rating",
+    });
+
     router.push("/rating");
   };
 
   // Which slots are completed (visible as chips) — any slot that has data
   // and isn't the currently active one
-  const completedSlots = SLOTS.filter((_, i) => {
+  const completedSlots = SLOTS.filter((slot, i) => {
     if (isAssembled) return false;
     if (i === currentStep) return false;
+    // Logo slot counts as completed when skipped
+    if (slot === "logo" && state.logoSkipped && i < state.highestStep) return true;
     return i < state.highestStep;
   });
 
@@ -166,10 +190,10 @@ export default function OnboardingPage() {
             >
               <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold text-white">
-                  Review your campaign
+                  review your campaign
                 </h1>
                 <p className="text-white/50">
-                  Make sure everything looks right. Click any card to make
+                  make sure everything looks right. click any card to make
                   changes.
                 </p>
               </div>
@@ -184,6 +208,7 @@ export default function OnboardingPage() {
                   <LogoSection
                     isActive={false}
                     logo={state.logo}
+                    skipped={state.logoSkipped}
                     onComplete={() => {}}
                   />
                 </PuzzleBlock>
@@ -238,7 +263,7 @@ export default function OnboardingPage() {
                   onClick={handleGenerate}
                   className="block w-full rounded-full bg-white py-3 text-center font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
                 >
-                  Generate Campaign
+                  generate campaign
                 </button>
               </motion.div>
             </motion.div>
@@ -267,6 +292,7 @@ export default function OnboardingPage() {
                         <LogoSection
                           isActive={false}
                           logo={state.logo}
+                          skipped={state.logoSkipped}
                           onComplete={() => {}}
                         />
                       )}
@@ -303,9 +329,11 @@ export default function OnboardingPage() {
                       <LogoSection
                         isActive
                         logo={state.logo}
+                        skipped={state.logoSkipped}
                         onComplete={(logo) =>
                           dispatch({ type: "COMPLETE_LOGO", logo })
                         }
+                        onSkip={() => dispatch({ type: "SKIP_LOGO" })}
                       />
                     </PuzzleBlock>
                   </motion.div>

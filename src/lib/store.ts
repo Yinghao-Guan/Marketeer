@@ -51,20 +51,20 @@ export interface Campaign {
   brandName: string;
 
   // Logo phase
-  approvedLogo: string;
-  logoRating: LogoRating;
-  styleLock: StyleLock;
+  approvedLogo?: string;
+  logoRating?: LogoRating | null;
+  styleLock?: StyleLock;
 
   // Proposal phase
-  proposal: CampaignProposal;
-  jingleMood: string;
+  proposal?: CampaignProposal;
+  jingleMood?: string;
 
   // Generated assets
-  banners: Banner[];
-  jingle: string;
-  video: string;
-  voiceover: string;
-  finalVideo: string;
+  banners?: Banner[];
+  jingle?: string;
+  video?: string;
+  voiceover?: string;
+  finalVideo?: string;
   finalVideoVersion?: number;
 
   // State
@@ -137,7 +137,6 @@ export async function getAllCampaigns(): Promise<Campaign[]> {
   const db = await initDB();
   const all = await db.getAll("campaigns");
   return all
-    .filter((c) => c.currentStep === "dashboard")
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

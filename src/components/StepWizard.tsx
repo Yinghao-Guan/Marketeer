@@ -24,7 +24,7 @@ export default function StepWizard({
           className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-300"
         >
           <ArrowLeft className="w-4 h-4" />
-          Home
+          home
         </Link>
       </div>
       {children}

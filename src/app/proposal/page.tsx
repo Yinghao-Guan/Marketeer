@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { saveCampaign, type Banner } from "@/lib/store";
+import { saveCampaign, updateCampaign, getCampaign as getCampaignFromDB, type Banner } from "@/lib/store";
 import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 import ProposalCard from "@/components/ProposalCard";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -24,11 +24,11 @@ type Phase = "loading" | "ready" | "revising" | "generating" | "error";
 type StepStatus = "waiting" | "active" | "done" | "error";
 
 const STEPS = [
-    "Crafting your banners...",
-    "Composing your jingle...",
-    "Filming your ad...",
-    "Recording your voiceover...",
-    "Putting it all together...",
+    "crafting your banners...",
+    "composing your jingle...",
+    "filming your ad...",
+    "recording your voiceover...",
+    "putting it all together...",
 ] as const;
 
 const PROGRESS_KEY = "marketeer-generation-progress";
@@ -53,8 +53,9 @@ function saveProgress(updates: Partial<GenerationProgress>) {
     sessionStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...current, ...updates }));
 }
 
-export default function ProposalPage() {
+function ProposalContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [phase, setPhase] = useState<Phase>("loading");
     const [proposal, setProposal] = useState<Proposal | null>(null);
     const [error, setError] = useState("");
@@ -112,7 +113,33 @@ export default function ProposalPage() {
     }, [getCampaign, saveCampaignToSession]);
 
     useEffect(() => {
-        generateProposal();
+        async function init() {
+            // Hydrate from IndexedDB when resuming from history
+            if (!getCampaign()) {
+                const resumeId = searchParams.get("id");
+                if (resumeId) {
+                    const saved = await getCampaignFromDB(resumeId);
+                    if (saved) {
+                        const sessionData: Record<string, unknown> = {
+                            id: saved.id,
+                            hasLogo: saved.hasLogo,
+                            userLogo: saved.userLogo,
+                            competitorLogos: saved.competitorLogos,
+                            location: saved.location,
+                            industry: saved.industry,
+                            brandName: saved.brandName,
+                        };
+                        if (saved.approvedLogo) sessionData.approvedLogo = saved.approvedLogo;
+                        if (saved.logoRating) sessionData.logoRating = saved.logoRating;
+                        if (saved.styleLock) sessionData.styleLock = saved.styleLock;
+                        if (saved.proposal) sessionData.proposal = saved.proposal;
+                        sessionStorage.setItem("marketeer-campaign", JSON.stringify(sessionData));
+                    }
+                }
+            }
+            generateProposal();
+        }
+        init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -290,15 +317,8 @@ export default function ProposalPage() {
         }
 
         // ── Save & navigate ───────────────────────────────────────────────────
-        await saveCampaign({
-            id: `campaign-${Date.now()}`,
-            createdAt: new Date(),
-            hasLogo: campaign.hasLogo ?? true,
-            userLogo: campaign.userLogo ?? null,
-            competitorLogos: campaign.competitorLogos ?? [],
-            location: campaign.location ?? "",
-            industry: campaign.industry ?? "",
-            brandName: campaign.brandName ?? "",
+        const campaignId = campaign.id ?? `campaign-${Date.now()}`;
+        const finalData = {
             approvedLogo: approvedLogo ?? "",
             logoRating: campaign.logoRating ?? null,
             styleLock,
@@ -310,8 +330,24 @@ export default function ProposalPage() {
             voiceover,
             finalVideo,
             finalVideoVersion: FINAL_VIDEO_VERSION,
-            currentStep: "dashboard",
-        });
+            currentStep: "dashboard" as const,
+        };
+        try {
+            await updateCampaign(campaignId, finalData);
+        } catch {
+            // Fallback: campaign wasn't in IndexedDB yet (legacy flow)
+            await saveCampaign({
+                id: campaignId,
+                createdAt: new Date(),
+                hasLogo: campaign.hasLogo ?? true,
+                userLogo: campaign.userLogo ?? null,
+                competitorLogos: campaign.competitorLogos ?? [],
+                location: campaign.location ?? "",
+                industry: campaign.industry ?? "",
+                brandName: campaign.brandName ?? "",
+                ...finalData,
+            });
+        }
 
         sessionStorage.removeItem(PROGRESS_KEY);
         router.push("/dashboard");
@@ -426,7 +462,7 @@ export default function ProposalPage() {
                                     ) : (
                                         <motion.div key="banners-loading" className="flex items-center gap-3 h-16">
                                             <div className="w-4 h-4 border border-white/20 border-t-[#5227FF] rounded-full animate-spin" />
-                                            <span className="text-sm text-white/30">Crafting banner visuals...</span>
+                                            <span className="text-sm text-white/30">crafting banner visuals...</span>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -435,8 +471,8 @@ export default function ProposalPage() {
                             {/* Jingle + Voiceover */}
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {[
-                                    { label: "Jingle", src: generatedJingle, pending: "Composing music..." },
-                                    { label: "Voiceover", src: generatedVoiceover, pending: "Recording voice..." },
+                                    { label: "jingle", src: generatedJingle, pending: "composing music..." },
+                                    { label: "voiceover", src: generatedVoiceover, pending: "recording voice..." },
                                 ].map(({ label, src, pending }) => (
                                     <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                                         <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">{label}</h2>
@@ -467,7 +503,7 @@ export default function ProposalPage() {
                                     ) : (
                                         <motion.div key="loading" className="flex items-center gap-3 h-16">
                                             <div className="w-4 h-4 border border-white/20 border-t-[#5227FF] rounded-full animate-spin" />
-                                            <span className="text-sm text-white/30">Filming your ad -- this can take up to 2 min...</span>
+                                            <span className="text-sm text-white/30">filming your ad - this can take up to 2 min...</span>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -482,19 +518,19 @@ export default function ProposalPage() {
     // ── Proposal screen ───────────────────────────────────────────────────────
     return (
         <StepWizard>
-            <div className="flex flex-col flex-1 items-center justify-center px-4 py-12">
+            <div className="flex flex-col flex-1 items-center justify-center px-6 sm:px-10 lg:px-16 py-12">
                 <motion.div
                     variants={staggerContainer}
                     initial="hidden"
                     animate="visible"
-                    className="w-full max-w-2xl space-y-6"
+                    className="w-full space-y-6"
                 >
                     <motion.div variants={staggerChild} className="text-center">
-                        <h1 className="text-3xl font-bold text-white">Campaign Proposal</h1>
+                        <h1 className="text-3xl font-bold text-white">campaign proposal</h1>
                         <p className="mt-2 text-white/50">
                             {phase === "loading" || phase === "revising"
-                                ? "Crafting your creative brief..."
-                                : "Review your campaign before we generate everything"}
+                                ? "crafting your creative brief..."
+                                : "review your campaign before we generate everything"}
                         </p>
                     </motion.div>
 
@@ -503,8 +539,8 @@ export default function ProposalPage() {
                             <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
                             <p className="text-white/50 text-sm">
                                 {phase === "revising"
-                                    ? "Revising your proposal..."
-                                    : "Generating creative brief..."}
+                                    ? "revising your proposal..."
+                                    : "generating creative brief..."}
                             </p>
                         </div>
                     )}
@@ -522,14 +558,14 @@ export default function ProposalPage() {
                                         }}
                                         className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
                                     >
-                                        Back to proposal
+                                        back to proposal
                                     </button>
                                 ) : (
                                     <button
                                         onClick={() => generateProposal()}
                                         className="px-6 py-2 rounded-full bg-white text-black font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
                                     >
-                                        Retry
+                                        retry
                                     </button>
                                 )}
                             </div>
@@ -548,13 +584,13 @@ export default function ProposalPage() {
                                     disabled={generatingStarted.current}
                                     className="w-full py-4 rounded-full bg-white text-black font-semibold text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Looks good, generate it all
+                                    looks good, generate it all
                                 </button>
                                 <button
                                     onClick={() => setShowRevise((v) => !v)}
                                     className="w-full py-3 rounded-full border border-white/10 text-white font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] active:scale-[0.98]"
                                 >
-                                    Revise
+                                    revise
                                 </button>
                             </motion.div>
 
@@ -572,7 +608,7 @@ export default function ProposalPage() {
                                         disabled={!revisionFeedback.trim()}
                                         className="w-full py-3 rounded-full bg-white text-black font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                                     >
-                                        Submit Revision
+                                        submit revision
                                     </button>
                                 </motion.div>
                             )}
@@ -601,4 +637,18 @@ function StatusIcon({ status }: { status: StepStatus }) {
         return <div className="w-5 h-5 shrink-0 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">X</div>;
     }
     return <div className="w-5 h-5 shrink-0 rounded-full border border-white/20" />;
+}
+
+export default function ProposalPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center text-white/50">
+                    loading...
+                </div>
+            }
+        >
+            <ProposalContent />
+        </Suspense>
+    );
 }

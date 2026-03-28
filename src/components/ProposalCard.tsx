@@ -19,14 +19,14 @@ export default function ProposalCard({ proposal, colors }: ProposalCardProps) {
         <div className="space-y-6">
             {/* Tagline */}
             <div className="rounded-xl bg-white/5 p-6 ring-1 ring-white/10">
-                <p className="text-xs font-medium uppercase tracking-widest text-white/40 mb-2">Tagline</p>
+                <p className="text-xs font-medium uppercase tracking-widest text-white/40 mb-2">tagline</p>
                 <p className="text-xl sm:text-3xl font-bold text-white">&ldquo;{proposal.tagline}&rdquo;</p>
             </div>
 
             {/* Color palette */}
             {colors.length > 0 && (
                 <div className="rounded-xl bg-white/5 p-6 ring-1 ring-white/10">
-                    <p className="text-xs font-medium uppercase tracking-widest text-white/40 mb-3">Color Palette</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-white/40 mb-3">color palette</p>
                     <div className="flex gap-3">
                         {colors.map((color) => (
                             <div key={color} className="flex flex-col items-center gap-1">
@@ -43,10 +43,10 @@ export default function ProposalCard({ proposal, colors }: ProposalCardProps) {
 
             {/* Grid of brief items */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Section label="Banner Concept" value={proposal.bannerConcept} />
-                <Section label="Jingle Mood" value={proposal.jingleMood} />
-                <Section label="Video Scene" value={proposal.videoScene} />
-                <Section label="Voiceover Script" value={proposal.voiceoverScript} />
+                <Section label="banner concept" value={proposal.bannerConcept} />
+                <Section label="jingle mood" value={proposal.jingleMood} />
+                <Section label="video scene" value={proposal.videoScene} />
+                <Section label="voiceover script" value={proposal.voiceoverScript} />
             </div>
         </div>
     );

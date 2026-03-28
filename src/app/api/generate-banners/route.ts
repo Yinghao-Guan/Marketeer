@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         const results = await Promise.all(
             ASPECT_RATIOS.map((aspectRatio) =>
                 ai.models.generateContent({
-                    model: "gemini-2.5-flash-image",
+                    model: "gemini-3.1-flash-image-preview",
                     contents: [
                         {
                             role: "user",

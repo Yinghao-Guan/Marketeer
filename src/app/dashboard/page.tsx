@@ -117,8 +117,8 @@ function DashboardContent() {
         if (needsFinalVideoRepair) {
           try {
             const repairedFinalVideo = await mergeVideoAudio(
-              latestCampaign.video,
-              latestCampaign.voiceover
+              latestCampaign.video!,
+              latestCampaign.voiceover!
             );
             const repair = {
               finalVideo: repairedFinalVideo,
@@ -172,7 +172,7 @@ function DashboardContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          bannerConcept: campaign.proposal.bannerConcept,
+          bannerConcept: campaign.proposal!.bannerConcept,
           styleLock: campaign.styleLock,
           logoBase64: campaign.approvedLogo,
           brandName: campaign.brandName,
@@ -198,10 +198,10 @@ function DashboardContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mood: campaign.jingleMood,
-          jingleMood: campaign.proposal.jingleMood,
+          jingleMood: campaign.proposal!.jingleMood,
           brandName: campaign.brandName,
           industry: campaign.industry,
-          tagline: campaign.proposal.tagline,
+          tagline: campaign.proposal!.tagline,
         }),
       });
       const data = await res.json();
@@ -225,7 +225,7 @@ function DashboardContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          videoScene: campaign.proposal.videoScene,
+          videoScene: campaign.proposal!.videoScene,
           styleLock: campaign.styleLock,
           logoBase64: campaign.approvedLogo,
           aspectRatio: "16:9",
@@ -259,7 +259,7 @@ function DashboardContent() {
       });
 
       // Step 3: merge with existing voiceover
-      const finalVideo = await mergeVideoAudio(videoBase64, campaign.voiceover);
+      const finalVideo = await mergeVideoAudio(videoBase64, campaign.voiceover!);
       await updateCampaign(campaign.id, {
         video: videoBase64,
         finalVideo,
@@ -286,15 +286,15 @@ function DashboardContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          script: campaign.proposal.voiceoverScript,
-          voiceTone: campaign.proposal.voiceTone,
+          script: campaign.proposal!.voiceoverScript,
+          voiceTone: campaign.proposal!.voiceTone,
         }),
       });
       const data = await res.json();
       const voiceover: string = data.audioBase64;
 
       // Re-merge with existing raw video
-      const finalVideo = await mergeVideoAudio(campaign.video, voiceover);
+      const finalVideo = await mergeVideoAudio(campaign.video!, voiceover);
       await updateCampaign(campaign.id, {
         voiceover,
         finalVideo,
@@ -320,7 +320,7 @@ function DashboardContent() {
     setDownloadingAll(true);
     try {
       const zip = new JSZip();
-      zip.file("logo.png", campaign.approvedLogo, { base64: true });
+      if (campaign.approvedLogo) zip.file("logo.png", campaign.approvedLogo, { base64: true });
 
       const bannerFormats: Banner["format"][] = ["1:1", "16:9", "9:16"];
       const bannerNames: Record<Banner["format"], string> = {
@@ -329,7 +329,7 @@ function DashboardContent() {
         "9:16": "banner-9x16.png",
       };
       for (const fmt of bannerFormats) {
-        const b64 = bannerByFormat(campaign.banners, fmt);
+        const b64 = bannerByFormat(campaign.banners ?? [], fmt);
         if (b64) zip.file(bannerNames[fmt], b64, { base64: true });
       }
 
@@ -341,10 +341,10 @@ function DashboardContent() {
 
       const brief = [
         `Brand: ${campaign.brandName}`,
-        `Tagline: ${campaign.proposal.tagline}`,
+        `Tagline: ${campaign.proposal!.tagline}`,
         "",
         "Voiceover Script:",
-        campaign.proposal.voiceoverScript,
+        campaign.proposal!.voiceoverScript,
       ].join("\n");
       zip.file("brief.txt", brief);
 
@@ -375,9 +375,9 @@ function DashboardContent() {
   if (!campaign || campaign.currentStep !== "dashboard") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-6">
-        <h1 className="text-2xl font-bold text-white">No campaign yet</h1>
+        <h1 className="text-2xl font-bold text-white">no campaign yet</h1>
         <p className="text-white/50 max-w-sm">
-          Complete the setup flow to generate your campaign assets.
+          complete the setup flow to generate your campaign assets.
         </p>
         <Link
           href="/"
@@ -389,9 +389,10 @@ function DashboardContent() {
     );
   }
 
-  const banner1x1 = bannerByFormat(campaign.banners, "1:1");
-  const banner16x9 = bannerByFormat(campaign.banners, "16:9");
-  const banner9x16 = bannerByFormat(campaign.banners, "9:16");
+  const banners = campaign.banners ?? [];
+  const banner1x1 = bannerByFormat(banners, "1:1");
+  const banner16x9 = bannerByFormat(banners, "16:9");
+  const banner9x16 = bannerByFormat(banners, "9:16");
 
   return (
     <main className="min-h-screen text-white">
@@ -412,7 +413,7 @@ function DashboardContent() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
               </svg>
-              Back to History
+              back to history
             </Link>
           </motion.div>
         )}
@@ -442,7 +443,7 @@ function DashboardContent() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              History
+              history
             </Link>
             <button
             onClick={handleDownloadAll}
@@ -455,14 +456,14 @@ function DashboardContent() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Preparing…
+                preparing…
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Download All
+                download all
               </>
             )}
           </button>
@@ -472,11 +473,11 @@ function DashboardContent() {
         {/* ── Tagline & Script ── */}
         <motion.section variants={staggerChild} className="flex flex-col gap-3">
           <p className="text-xl sm:text-3xl font-bold leading-snug">
-            &ldquo;{campaign.proposal.tagline}&rdquo;
+            &ldquo;{campaign.proposal!.tagline}&rdquo;
           </p>
 
           {/* Color palette */}
-          {campaign.styleLock.colors.length > 0 && (
+          {campaign.styleLock && campaign.styleLock.colors.length > 0 && (
             <div className="flex items-center gap-2 mt-1">
               {campaign.styleLock.colors.map((color) => (
                 <div
@@ -486,7 +487,7 @@ function DashboardContent() {
                   title={color}
                 />
               ))}
-              <span className="text-xs text-white/30 ml-1">{campaign.styleLock.style}</span>
+              <span className="text-xs text-white/30 ml-1">{campaign.styleLock?.style}</span>
             </div>
           )}
 
@@ -509,7 +510,7 @@ function DashboardContent() {
             </button>
             {scriptExpanded && (
               <p className="mt-2 text-sm text-white/60 leading-relaxed max-w-prose pl-5">
-                {campaign.proposal.voiceoverScript}
+                {campaign.proposal!.voiceoverScript}
               </p>
             )}
           </div>
@@ -521,7 +522,7 @@ function DashboardContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* 1:1 */}
             <AssetCard
-              title="Square (1:1)"
+              title="square (1:1)"
               isRegenerating={regenerating.banners}
               onRegenerate={handleRegenerateBanners}
               onDownload={banner1x1 ? () => triggerDownload(banner1x1, "image/png", "banner-1x1.png") : undefined}
@@ -535,14 +536,14 @@ function DashboardContent() {
                 />
               ) : (
                 <div className="w-full aspect-square rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-sm">
-                  No banner
+                  no banner
                 </div>
               )}
             </AssetCard>
 
             {/* 16:9 */}
             <AssetCard
-              title="Landscape (16:9)"
+              title="landscape (16:9)"
               isRegenerating={regenerating.banners}
               onDownload={banner16x9 ? () => triggerDownload(banner16x9, "image/png", "banner-16x9.png") : undefined}
             >
@@ -555,14 +556,14 @@ function DashboardContent() {
                 />
               ) : (
                 <div className="w-full aspect-video rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-sm">
-                  No banner
+                  no banner
                 </div>
               )}
             </AssetCard>
 
             {/* 9:16 */}
             <AssetCard
-              title="Portrait (9:16)"
+              title="portrait (9:16)"
               isRegenerating={regenerating.banners}
               onDownload={banner9x16 ? () => triggerDownload(banner9x16, "image/png", "banner-9x16.png") : undefined}
             >
@@ -575,7 +576,7 @@ function DashboardContent() {
                 />
               ) : (
                 <div className="w-full aspect-[9/16] max-h-48 rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-sm">
-                  No banner
+                  no banner
                 </div>
               )}
             </AssetCard>
@@ -586,15 +587,15 @@ function DashboardContent() {
         <motion.section variants={staggerChild} className="flex flex-col gap-4">
           <h2 className="text-[13px] uppercase tracking-[0.15em] font-light text-white/40">Jingle</h2>
           <AssetCard
-            title="Audio — 30 seconds"
+            title="audio - 30 seconds"
             isRegenerating={regenerating.jingle}
             onRegenerate={handleRegenerateJingle}
-            onDownload={campaign.jingle ? () => triggerDownload(campaign.jingle, "audio/wav", "jingle.wav") : undefined}
+            onDownload={campaign.jingle ? () => triggerDownload(campaign.jingle!, "audio/wav", "jingle.wav") : undefined}
           >
             {campaign.jingle ? (
               <AudioPlayer src={campaign.jingle} />
             ) : (
-              <p className="text-white/30 text-sm">No jingle generated</p>
+              <p className="text-white/30 text-sm">no jingle generated</p>
             )}
           </AssetCard>
         </motion.section>
@@ -604,29 +605,29 @@ function DashboardContent() {
           <h2 className="text-[13px] uppercase tracking-[0.15em] font-light text-white/40">Video Ad</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AssetCard
-              title="Final Ad (video + voiceover)"
+              title="final ad (video + voiceover)"
               isRegenerating={regenerating.video}
               onRegenerate={handleRegenerateVideo}
-              onDownload={campaign.finalVideo ? () => triggerDownload(campaign.finalVideo, "video/mp4", "video-ad.mp4") : undefined}
+              onDownload={campaign.finalVideo ? () => triggerDownload(campaign.finalVideo!, "video/mp4", "video-ad.mp4") : undefined}
             >
               {campaign.finalVideo ? (
                 <VideoPlayer src={campaign.finalVideo} poster={campaign.approvedLogo} />
               ) : (
                 <div className="aspect-video rounded-xl bg-white/5 flex items-center justify-center text-white/30 text-sm">
-                  No video generated
+                  no video generated
                 </div>
               )}
             </AssetCard>
 
             <AssetCard
-              title="Voiceover"
+              title="voiceover"
               isRegenerating={regenerating.voiceover}
               onRegenerate={handleRegenerateVoiceover}
-              onDownload={campaign.voiceover ? () => triggerDownload(campaign.voiceover, "audio/wav", "voiceover.wav") : undefined}
+              onDownload={campaign.voiceover ? () => triggerDownload(campaign.voiceover!, "audio/wav", "voiceover.wav") : undefined}
             >
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-white/50 leading-relaxed">
-                  {campaign.proposal.voiceoverScript}
+                  {campaign.proposal!.voiceoverScript}
                 </p>
                 {campaign.voiceover && <AudioPlayer src={campaign.voiceover} />}
               </div>

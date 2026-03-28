@@ -29,10 +29,10 @@ export default function LocationSection({
         <motion.div key="active" {...fade} className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              Where is your business located?
+              where is your business located?
             </h2>
             <p className="mt-1 text-white/50">
-              City or region — this helps us tailor your campaign.
+              city or region - this helps us tailor your campaign.
             </p>
           </div>
           <input
@@ -53,7 +53,7 @@ export default function LocationSection({
                 onClick={() => onComplete(value.trim())}
                 className="block w-full rounded-full bg-white py-3 text-center font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
               >
-                Continue
+                continue
               </button>
             </motion.div>
           )}
@@ -63,7 +63,7 @@ export default function LocationSection({
           key="completed"
           {...fade}
         >
-          <p className="text-sm text-white/40">Location</p>
+          <p className="text-sm text-white/40">location</p>
           <p className="text-base font-semibold text-white">{savedLocation}</p>
         </motion.div>
       )}

@@ -49,10 +49,10 @@ export default function IndustrySection({
         <motion.div key="active" {...fade} className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white">
-              What industry are you in?
+              what industry are you in?
             </h2>
             <p className="mt-1 text-white/50">
-              This shapes the style and tone of your campaign.
+              this shapes the style and tone of your campaign.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -75,7 +75,7 @@ export default function IndustrySection({
               type="text"
               value={otherText}
               onChange={(e) => setOtherText(e.target.value)}
-              placeholder="Describe your industry"
+              placeholder="describe your industry"
               className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
               autoFocus
             />
@@ -90,7 +90,7 @@ export default function IndustrySection({
                 onClick={() => onComplete(resolvedIndustry)}
                 className="block w-full rounded-full bg-white py-3 text-center font-medium text-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
               >
-                Continue
+                continue
               </button>
             </motion.div>
           )}
@@ -100,7 +100,7 @@ export default function IndustrySection({
           key="completed"
           {...fade}
         >
-          <p className="text-sm text-white/40">Industry</p>
+          <p className="text-sm text-white/40">industry</p>
           <p className="text-base font-semibold text-white">{savedIndustry}</p>
         </motion.div>
       )}

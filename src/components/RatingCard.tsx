@@ -4,7 +4,7 @@ import type { LogoRating, Improvement } from "@/types/campaign";
 
 // ── Score Ring ────────────────────────────────────────────
 
-function ScoreRing({
+export function ScoreRing({
   score,
   size = 80,
   label,
@@ -70,16 +70,26 @@ function FormatRow({
   label,
   score,
   reasoning,
+  prevScore,
 }: {
   label: string;
   score: number;
   reasoning: string;
+  prevScore?: number;
 }) {
+  const delta = prevScore != null ? score - prevScore : null;
   return (
     <div className="flex items-start gap-3 sm:gap-4 py-3 border-b border-white/10 last:border-0">
       <ScoreRing score={score} size={56} />
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-white">{label}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-white">{label}</h4>
+          {delta != null && delta !== 0 && (
+            <span className={`text-xs font-medium ${delta > 0 ? "text-green-400" : "text-red-400"}`}>
+              {delta > 0 ? "+" : ""}{delta.toFixed(1)}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-white/50 mt-0.5">{reasoning}</p>
       </div>
     </div>
@@ -124,7 +134,7 @@ function ImprovementCard({
         className="mt-3 w-full py-2 px-4 rounded-full bg-white text-black text-sm font-medium
           hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {applying ? "Applying..." : "Apply this improvement"}
+        {applying ? "applying..." : "apply this improvement"}
       </button>
     </div>
   );
@@ -142,7 +152,7 @@ function CompetitorSection({
   return (
     <div className="glass-card p-4 space-y-3">
       <h3 className="text-sm font-semibold text-white">
-        Competitor Analysis
+        competitor analysis
       </h3>
       <div>
         <p className="text-xs text-white/40 uppercase tracking-wide mb-1">
@@ -164,65 +174,78 @@ function CompetitorSection({
 
 export default function RatingCard({
   rating,
+  previousRating,
   onApplyImprovement,
   applyingIndex,
+  hideOverallScore = false,
 }: {
   rating: LogoRating;
+  previousRating?: LogoRating | null;
   onApplyImprovement: (index: number) => void;
   applyingIndex: number | null;
+  hideOverallScore?: boolean;
 }) {
   return (
     <div className="space-y-6">
       {/* Overall Score */}
-      <div className="flex flex-col items-center py-4">
-        <ScoreRing score={rating.overallRating} size={120} />
-        <p className="text-white/50 text-sm mt-2">Overall Rating</p>
-      </div>
-
-      {/* Per-format Ratings */}
-      <div className="glass-card p-4">
-        <h3 className="text-sm font-semibold text-white mb-3">
-          Format Effectiveness
-        </h3>
-        <FormatRow
-          label="Banner"
-          score={rating.formatRatings.banner.score}
-          reasoning={rating.formatRatings.banner.reasoning}
-        />
-        <FormatRow
-          label="Video Ad"
-          score={rating.formatRatings.video.score}
-          reasoning={rating.formatRatings.video.reasoning}
-        />
-        <FormatRow
-          label="Social Media"
-          score={rating.formatRatings.social.score}
-          reasoning={rating.formatRatings.social.reasoning}
-        />
-      </div>
-
-      {/* Competitor Analysis */}
-      {rating.competitorAnalysis && (
-        <CompetitorSection
-          colorOverlap={rating.competitorAnalysis.colorOverlap}
-          differentiation={rating.competitorAnalysis.differentiation}
-        />
+      {!hideOverallScore && (
+        <div className="flex flex-col items-center py-4">
+          <ScoreRing score={rating.overallRating} size={120} />
+          <p className="text-white/50 text-sm mt-2">overall rating</p>
+        </div>
       )}
+
+      {/* Per-format Ratings + Competitor Analysis — side by side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="glass-card p-4">
+          <h3 className="text-sm font-semibold text-white mb-3">
+            format effectiveness
+          </h3>
+          <FormatRow
+            label="banner"
+            score={rating.formatRatings.banner.score}
+            reasoning={rating.formatRatings.banner.reasoning}
+            prevScore={previousRating?.formatRatings.banner.score}
+          />
+          <FormatRow
+            label="video ad"
+            score={rating.formatRatings.video.score}
+            reasoning={rating.formatRatings.video.reasoning}
+            prevScore={previousRating?.formatRatings.video.score}
+          />
+          <FormatRow
+            label="social media"
+            score={rating.formatRatings.social.score}
+            reasoning={rating.formatRatings.social.reasoning}
+            prevScore={previousRating?.formatRatings.social.score}
+          />
+        </div>
+
+        {/* Competitor Analysis */}
+        {rating.competitorAnalysis && (
+          <CompetitorSection
+            colorOverlap={rating.competitorAnalysis.colorOverlap}
+            differentiation={rating.competitorAnalysis.differentiation}
+          />
+        )}
+      </div>
 
       {/* Improvements */}
       {rating.improvements.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-white">
-            Suggested Improvements
+            suggested improvements
           </h3>
-          {rating.improvements.map((imp, i) => (
-            <ImprovementCard
-              key={i}
-              improvement={imp}
-              onApply={() => onApplyImprovement(i)}
-              applying={applyingIndex === i}
-            />
-          ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {rating.improvements.map((imp, i) => (
+              <ImprovementCard
+                key={i}
+                improvement={imp}
+                onApply={() => onApplyImprovement(i)}
+                applying={applyingIndex === i}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

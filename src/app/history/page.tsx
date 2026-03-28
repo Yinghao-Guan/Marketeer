@@ -33,6 +33,18 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const navigateToCampaign = (c: Campaign) => {
+    switch (c.currentStep) {
+      case "rating":
+        return router.push(`/rating?id=${c.id}`);
+      case "proposal":
+      case "generating":
+        return router.push(`/proposal?id=${c.id}`);
+      default:
+        return router.push(`/dashboard?id=${c.id}`);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -85,10 +97,10 @@ export default function HistoryPage() {
           />
         </svg>
         <h1 className="text-xl font-semibold text-white/60">
-          No campaigns yet
+          no campaigns yet
         </h1>
         <p className="text-sm text-white/30 max-w-xs">
-          Create your first campaign to see it here.
+          create your first campaign to see it here.
         </p>
         <Link
           href="/"
@@ -116,7 +128,7 @@ export default function HistoryPage() {
             className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-300"
           >
             <ArrowLeft className="w-4 h-4" />
-            Home
+            home
           </Link>
         </motion.div>
 
@@ -126,7 +138,7 @@ export default function HistoryPage() {
           className="flex items-center justify-between gap-4 flex-wrap"
         >
           <div>
-            <h1 className="text-2xl font-bold">Campaign History</h1>
+            <h1 className="text-2xl font-bold">campaign history</h1>
             <p className="text-white/40 text-sm">
               {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}
             </p>
@@ -144,7 +156,7 @@ export default function HistoryPage() {
             >
               <path d="M12 4v16m8-8H4" />
             </svg>
-            New Campaign
+            new campaign
           </Link>
         </motion.div>
 
@@ -170,7 +182,7 @@ export default function HistoryPage() {
                   {/* Banner preview / logo fallback */}
                   <div
                     className="relative w-full aspect-video overflow-hidden cursor-pointer"
-                    onClick={() => router.push(`/dashboard?id=${c.id}`)}
+                    onClick={() => navigateToCampaign(c)}
                   >
                     {bannerPreview(c) ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -214,10 +226,15 @@ export default function HistoryPage() {
                       )}
                       <span
                         className="text-sm font-semibold truncate flex-1 cursor-pointer hover:text-white/90 transition-colors"
-                        onClick={() => router.push(`/dashboard?id=${c.id}`)}
+                        onClick={() => navigateToCampaign(c)}
                       >
-                        {c.brandName}
+                        {c.brandName || c.industry || "new campaign"}
                       </span>
+                      {c.currentStep !== "dashboard" && (
+                        <span className="flex-shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
+                          in progress
+                        </span>
+                      )}
 
                       {/* Delete button */}
                       {deleteConfirmId === c.id ? (
@@ -226,13 +243,13 @@ export default function HistoryPage() {
                             onClick={() => handleDelete(c.id)}
                             className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
                           >
-                            Delete
+                            delete
                           </button>
                           <button
                             onClick={() => setDeleteConfirmId(null)}
                             className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/10 text-white/50 hover:bg-white/20 transition-colors"
                           >
-                            Cancel
+                            cancel
                           </button>
                         </div>
                       ) : (

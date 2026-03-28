@@ -92,8 +92,7 @@ Implements `prd.md > Onboarding & Brand Input`, `prd.md > Logo Rating & Improvem
 - Subtitle: "Marketing campaigns for small businesses"
 - Rotating business type ticker (restaurants, coffee shops, boutiques, barbershops, bakeries, etc.)
 - CTA: "Big-agency marketing without the big-agency budget."
-- Two CTA buttons: "I have a logo" (primary, white) / "Make me one" (secondary, outline)
-- Both buttons → `/onboarding` (stores `hasLogo` flag in sessionStorage)
+- Single CTA button: "Get Started" (primary, white) → `/onboarding`
 - "View past campaigns" link → `/history`
 - Hackathon partner logo carousel at bottom (LogoLoop component: Glitch Club, Gemini, UCLA)
 
@@ -101,7 +100,7 @@ Implements `prd.md > Onboarding & Brand Input`, `prd.md > Logo Rating & Improvem
 Single page with a 4-step puzzle UI. Each step is a section component rendered inside a PuzzleBlock. Completed steps collapse into clickable chips; the active step is shown full-size. Uses Framer Motion LayoutGroup + AnimatePresence for smooth layout transitions. Progress dots at the top show current position.
 
 **Steps (in order):**
-1. **Logo** (LogoSection) — Drag-and-drop upload via FileUpload component. Preview of uploaded image. "Continue" button advances to next step.
+1. **Logo** (LogoSection) — Drag-and-drop upload via FileUpload component. Preview of uploaded image. "Continue" button advances to next step. "Skip — generate one for me" link skips upload; logo will be AI-generated on the rating page instead.
 2. **Rivals** (CompetitorSection) — Multi-file upload for competitor logos/marketing material. Gallery preview of all uploads.
 3. **Location** (LocationSection) — Text input for business city/region.
 4. **Industry** (IndustrySection) — Grid of 10 selectable categories: Restaurant / Food & Drink, Retail / Shopping, Tech / Software, Health & Wellness, Education, Real Estate, Political Campaign, Entertainment / Events, Professional Services, Other (with text input).
@@ -242,7 +241,7 @@ Implements `prd.md > Logo Rating & Improvement`
 ```
 
 **What it does:**
-- Calls Nano Banana (`gemini-2.5-flash-image`) with `responseModalities: ['IMAGE', 'TEXT']`
+- Calls Nano Banana 2 (`gemini-3.1-flash-image-preview`) with `responseModalities: ['IMAGE', 'TEXT']`
 - Prompt includes industry context, location, and instructions to avoid competitor colors/styles
 - `imageConfig: { aspectRatio: '1:1' }` for logo
 
@@ -317,7 +316,7 @@ Implements `prd.md > Asset Generation` (banners)
 ```
 
 **What it does:**
-- Makes 3 parallel calls to Nano Banana (`gemini-2.5-flash-image`)
+- Makes 3 parallel calls to Nano Banana 2 (`gemini-3.1-flash-image-preview`)
 - Each call uses a different `aspectRatio`: `"1:1"`, `"16:9"`, `"9:16"`
 - All prompts include Style Lock colors and banner concept from proposal
 - All at 1K resolution

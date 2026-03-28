@@ -77,8 +77,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [businessTypes.length]);
 
-  const start = (hasLogo: boolean) => {
-    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ hasLogo }));
+  const start = () => {
     router.push("/onboarding");
   };
 
@@ -184,7 +183,7 @@ export default function Home() {
           custom={0.4}
           className="text-base sm:text-lg font-light text-white/70 text-center leading-relaxed max-w-xs"
         >
-          Big-agency marketing without the big-agency budget.
+          big-agency marketing without the big-agency budget.
         </motion.p>
 
         {/* Small business badge */}
@@ -209,12 +208,11 @@ export default function Home() {
           custom={0.5}
           className="flex flex-col gap-3 w-full"
         >
-          {/* Primary: I have a logo */}
           <button
-            onClick={() => start(true)}
+            onClick={() => start()}
             className="group flex items-center justify-center gap-3 rounded-full bg-white pl-7 pr-2 py-2.5 text-sm font-medium tracking-wide text-black cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
           >
-            I have a logo
+            get started
             <span className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
               <svg
                 width="14"
@@ -226,32 +224,8 @@ export default function Home() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            </span>
-          </button>
-
-          {/* Secondary: Make me one */}
-          <button
-            onClick={() => start(false)}
-            className="group flex items-center justify-center gap-3 rounded-full pl-7 pr-2 py-2.5 text-sm font-medium tracking-wide text-white cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] active:scale-[0.98]"
-            style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            Make me one
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.08] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z" />
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
               </svg>
             </span>
           </button>
