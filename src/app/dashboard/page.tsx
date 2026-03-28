@@ -478,6 +478,29 @@ function DashboardContent() {
           </div>
         </motion.div>
 
+        {/* ── Brand Overview ── */}
+        {(campaign.approvedLogo || campaign.description) && (
+          <motion.section variants={staggerChild} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 rounded-2xl border border-white/10 bg-white/[0.03]">
+            {campaign.approvedLogo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`data:image/png;base64,${campaign.approvedLogo}`}
+                alt={`${campaign.brandName} logo`}
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-contain bg-white/10 p-3 flex-shrink-0"
+              />
+            )}
+            <div className="flex flex-col justify-center gap-2 text-center sm:text-left">
+              <h2 className="text-lg font-semibold text-white">{campaign.brandName}</h2>
+              {campaign.description ? (
+                <p className="text-white/60 text-sm leading-relaxed max-w-prose">{campaign.description}</p>
+              ) : (
+                <p className="text-white/30 text-sm italic">no description provided</p>
+              )}
+              <p className="text-white/30 text-xs mt-1">{campaign.industry} · {campaign.location}</p>
+            </div>
+          </motion.section>
+        )}
+
         {/* ── Tagline & Script ── */}
         <motion.section variants={staggerChild} className="flex flex-col gap-3">
           <p className="text-xl sm:text-3xl font-bold leading-snug">
