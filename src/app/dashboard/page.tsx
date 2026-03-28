@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import JSZip from "jszip";
 import AssetCard from "@/components/AssetCard";
@@ -9,6 +10,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import VideoPlayer from "@/components/VideoPlayer";
 import {
   initDB,
+  getCampaign,
   getLatestCampaign,
   updateCampaign,
   Campaign,
@@ -68,7 +70,9 @@ function bannerByFormat(banners: Banner[], format: Banner["format"]): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const viewingFromHistory = searchParams.get("id");
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState<RegeneratingState>({
@@ -90,7 +94,10 @@ export default function DashboardPage() {
     const loadCampaign = async () => {
       try {
         await initDB();
-        const latestCampaign = await getLatestCampaign();
+        const id = searchParams.get("id");
+        const latestCampaign = id
+          ? await getCampaign(id)
+          : await getLatestCampaign();
 
         if (!latestCampaign) {
           if (!cancelled) {
@@ -146,7 +153,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
   // ── Cleanup video polling on unmount ──
   useEffect(() => {
@@ -374,7 +381,7 @@ export default function DashboardPage() {
         </p>
         <Link
           href="/"
-          className="mt-2 px-6 py-2 rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] text-white text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          className="mt-2 px-6 py-2 rounded-full bg-white text-black text-sm font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
         >
           Get started
         </Link>
@@ -392,8 +399,23 @@ export default function DashboardPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="max-w-5xl mx-auto px-4 py-8 sm:px-6 sm:py-12 flex flex-col gap-12"
+        className="w-full px-6 py-8 sm:px-12 sm:py-12 lg:px-20 flex flex-col gap-12"
       >
+
+        {/* ── Back to History ── */}
+        {viewingFromHistory && (
+          <motion.div variants={staggerChild}>
+            <Link
+              href="/history"
+              className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors duration-300"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              Back to History
+            </Link>
+          </motion.div>
+        )}
 
         {/* ── Header ── */}
         <motion.div variants={staggerChild} className="flex items-center justify-between gap-4 flex-wrap">
@@ -412,10 +434,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <button
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Link
+              href="/history"
+              className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 transition-colors duration-300"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              History
+            </Link>
+            <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 w-full sm:w-auto rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 w-full sm:w-auto rounded-full border border-white/10 bg-transparent text-white disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
           >
             {downloadingAll ? (
               <>
@@ -434,6 +466,7 @@ export default function DashboardPage() {
               </>
             )}
           </button>
+          </div>
         </motion.div>
 
         {/* ── Tagline & Script ── */}
@@ -603,5 +636,19 @@ export default function DashboardPage() {
 
       </motion.div>
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white/50">
+          Loading...
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

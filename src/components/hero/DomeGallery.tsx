@@ -189,7 +189,7 @@ export default function DomeGallery({
                 }
               >
                 <div className="item__image">
-                  <img src={it.src} draggable={false} alt={it.alt} />
+                  <img src={it.src} draggable={false} alt={it.alt} loading="lazy" decoding="async" />
                 </div>
               </div>
             ))}

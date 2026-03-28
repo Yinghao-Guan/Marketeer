@@ -41,6 +41,10 @@ export default function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} ${dirtyline.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className="min-h-full flex flex-col bg-[#0a0a0a]">
         <GlobalBackground />
         <div className="relative z-10 flex flex-col flex-1">{children}</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { fadeBlur, EASE_SMOOTH } from "@/lib/motion";
@@ -40,13 +40,14 @@ export default function GeneratingPage() {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("banners-intro");
 
-  const getCampaign = useCallback(() => {
+  const [campaign, setCampaignData] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
     const data = sessionStorage.getItem("marketeer-campaign");
-    return data ? JSON.parse(data) : null;
+    if (data) setCampaignData(JSON.parse(data));
   }, []);
 
-  const campaign = getCampaign();
-  const proposal = campaign?.proposal;
+  const proposal = campaign?.proposal as Record<string, string> | undefined;
 
   useEffect(() => {
     const duration = STAGE_DURATIONS[stage];

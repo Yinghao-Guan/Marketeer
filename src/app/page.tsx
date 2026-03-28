@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { LogoLoop } from "@/components/LogoLoop/LogoLoop";
@@ -254,6 +255,21 @@ export default function Home() {
               </svg>
             </span>
           </button>
+        </motion.div>
+
+        <motion.div
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.6}
+          className="flex justify-center"
+        >
+          <Link
+            href="/history"
+            className="text-[13px] tracking-[0.15em] uppercase font-light text-white/30 hover:text-white/60 transition-colors duration-300"
+          >
+            View past campaigns
+          </Link>
         </motion.div>
         </div>
 

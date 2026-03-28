@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
@@ -217,6 +219,15 @@ export default function RatingPage() {
   // ── Render ──────��─────────────────────��────────────────
   return (
     <main className="min-h-screen text-white">
+      <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-300"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Home
+        </Link>
+      </div>
       <motion.div
         variants={staggerContainer}
         initial="hidden"

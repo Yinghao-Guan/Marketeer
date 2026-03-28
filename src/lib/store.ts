@@ -133,6 +133,22 @@ export async function updateCampaign(
   await db.put("campaigns", { ...existing, ...partial });
 }
 
+export async function getAllCampaigns(): Promise<Campaign[]> {
+  const db = await initDB();
+  const all = await db.getAll("campaigns");
+  return all
+    .filter((c) => c.currentStep === "dashboard")
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+  const db = await initDB();
+  await db.delete("campaigns", id);
+}
+
 // Dev-only seed helper — call window.seedCampaign() in the browser console
 if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
   const TINY_PNG =
