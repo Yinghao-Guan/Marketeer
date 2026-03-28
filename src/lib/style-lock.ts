@@ -25,9 +25,9 @@ export async function extractColors(
       // Count color occurrences (quantized to nearest 32 per channel)
       const colorMap = new Map<string, number>();
       for (let i = 0; i < data.length; i += 4) {
-        const r = Math.round(data[i] / 32) * 32;
-        const g = Math.round(data[i + 1] / 32) * 32;
-        const b = Math.round(data[i + 2] / 32) * 32;
+        const r = Math.min(Math.round(data[i] / 32) * 32, 255);
+        const g = Math.min(Math.round(data[i + 1] / 32) * 32, 255);
+        const b = Math.min(Math.round(data[i + 2] / 32) * 32, 255);
         const a = data[i + 3];
 
         // Skip near-white, near-black, and transparent pixels
