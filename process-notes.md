@@ -126,3 +126,30 @@ The learner was significantly more engaged in this phase:
 
 ### Active shaping
 - The learner did NOT engage with sequencing logic — accepted the proposed order. This is consistent with their pattern of moving fast and not belaboring decisions they trust the agent to handle. They were more engaged in earlier phases (/scope, /prd) where the creative and product decisions lived.
+
+## /build
+
+### Step 1: Project scaffold and dependency installation
+- **What was built:** Installed framer-motion, idb, jszip, @ffmpeg/ffmpeg, @ffmpeg/util. Initialized shadcn/ui (base-nova style) with Button, Input, and Card components. Created full directory structure matching spec. Updated layout metadata to "Marketeer" and forced dark mode.
+- **Verification:** Learner ran dev server, saw dark-themed default Next.js page — confirmed working.
+- **Knowledge check:** Asked about the `@` import alias — too advanced for the learner's level. They pushed back ("youre asking too many questions that a beginner like me does not know the answer to"). Gave a brief explanation and moved on. Need to calibrate knowledge checks to beginner level going forward.
+- **Issues:** Dev server from agent's test was still running, caused a port conflict. Resolved by pointing learner to the already-running server on port 3000.
+
+### Step 2: Root layout and animated background
+- **What was built:** Created AnimatedBackground.tsx using React Bits' Threads component (WebGL via ogl library). White flowing threads on black background with mouse interaction. Updated root layout to render background behind all pages. Simplified default page to transparent so background shows through.
+- **Verification:** Learner saw animated threads flowing behind "Marketeer" text — confirmed working.
+- **Knowledge check:** Asked if background would persist across pages. Learner didn't answer directly — asked why there were no navigation buttons (confused Step 2 with Step 3). Explained that buttons come in the next step, and that yes, background persists because it's in the root layout.
+- **Issues:** None — clean build.
+
+### Step 3: Landing page — "Do you have a logo?"
+- **What was built:** Replaced placeholder page.tsx with landing page showing "Marketeer" title, "Do you have a logo?" prompt, and Yes/No buttons. Yes links to `/onboarding/upload-logo`, No links to `/onboarding/location`. Used Next.js Link for instant navigation.
+- **Verification:** Learner confirmed title, buttons, and both navigation paths work — "yes yes and ye."
+- **Knowledge check:** Skipped — learner had already moved to next /build before verification. Kept pace.
+- **Issues:** None.
+
+### Steps 4-9: Batch build (FileUpload, all onboarding pages, StepWizard)
+- **What was built:** FileUpload component with single/multi-file modes, drag-and-drop, base64 conversion, image preview, and remove buttons. Upload Logo page (single file + Next button appears after upload). Competitors page (multi-file + Skip/Next button). Location page (text input + Next appears after typing). Industry page (10-category grid, single selection, "Other" reveals text input, Next appears after selection). StepWizard wrapper with Framer Motion fade+slide-up animation applied to all pages.
+- **Verification:** Agent verified all pages via Chrome browser automation — clicked through the full flow: landing → upload logo → competitors → location (typed "Austin, TX", Next appeared) → industry (selected "Restaurant / Food & Drink", Next appeared; tested "Other", text input appeared). All pages render with animated background behind them.
+- **Knowledge check:** Skipped — learner requested batch build with no stopping.
+- **Issues:** Learner requested background be 50% darker — reduced thread color from white (1,1,1) to gray (0.5,0.5,0.5).
+- **Learner flags:** Requested darker background — shows attention to visual polish and demo aesthetics.
