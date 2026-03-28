@@ -49,6 +49,7 @@ export interface Campaign {
   location: string;
   industry: string;
   brandName: string;
+  description: string;
 
   // Logo phase
   approvedLogo?: string;
@@ -166,6 +167,7 @@ if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
         location: "San Francisco",
         industry: "Tech / Software",
         brandName: "Marketeer",
+        description: "AI-powered marketing campaign generator for modern brands.",
         approvedLogo: TINY_PNG,
         logoRating: {
           overallRating: 8,

@@ -340,6 +340,7 @@ function ProposalContent() {
                 location: campaign.location ?? "",
                 industry: campaign.industry ?? "",
                 brandName: campaign.brandName ?? "",
+                description: campaign.description ?? "",
                 ...finalData,
             });
         }
