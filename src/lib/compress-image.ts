@@ -34,13 +34,14 @@ export function compressImage(
           return;
         }
 
-        ctx.drawImage(img, 0, 0, w, h);
-
-        // Use PNG for formats that may have transparency (SVG, PNG)
+        // Use PNG for formats that may have transparency (SVG, PNG, WebP)
         // Use JPEG for everything else (much smaller file size)
         const hasAlpha =
           dataUrl.startsWith("data:image/svg+xml") ||
-          dataUrl.startsWith("data:image/png");
+          dataUrl.startsWith("data:image/png") ||
+          dataUrl.startsWith("data:image/webp");
+
+        ctx.drawImage(img, 0, 0, w, h);
 
         if (hasAlpha) {
           resolve(canvas.toDataURL("image/png"));

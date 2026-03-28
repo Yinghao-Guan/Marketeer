@@ -150,6 +150,43 @@ function RatingContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Re-analyze logo ─────────────────────────────────────
+  const handleReanalyze = async () => {
+    if (!logoBase64) return;
+    const campaign = getCampaignData();
+    if (!campaign) return;
+
+    setPhase("analyzing");
+    try {
+      const analyzeRes = await fetch("/api/analyze-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          logoBase64,
+          competitorLogosBase64: campaign.competitorLogos || [],
+          industry: campaign.industry || "general",
+          location: campaign.location || "",
+        }),
+      });
+      if (!analyzeRes.ok) throw new Error("Logo analysis failed");
+      const ratingData: LogoRating = await analyzeRes.json();
+
+      setRating(ratingData);
+      saveCampaignData({ logoRating: ratingData });
+
+      const entry: LogoHistoryEntry = { logoBase64, rating: ratingData };
+      const updated = [...logoHistory, entry];
+      setLogoHistory(updated);
+      saveCampaignData({ logoHistory: updated });
+
+      setPhase("ready");
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : "Re-analysis failed");
+      setPhase("error");
+    }
+  };
+
   // ── Apply improvement ───���──────────────────────────────
   const handleApplyImprovement = async (index: number) => {
     if (!rating || !logoBase64) return;
@@ -314,7 +351,7 @@ function RatingContent() {
   // ── Render ──────��─────────────────────��────────────────
   return (
     <main className="min-h-screen text-white">
-      <div className="px-4 pt-4 sm:px-6 sm:pt-6">
+      <div className="px-4 pt-4 sm:px-6 sm:pt-6 flex items-center justify-between">
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white/50 hover:text-white hover:bg-white/[0.06] transition-all duration-300"
@@ -322,6 +359,18 @@ function RatingContent() {
           <ArrowLeft className="w-4 h-4" />
           home
         </Link>
+        {phase === "ready" && (
+          <button
+            onClick={handleReanalyze}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm text-white/50 hover:text-white hover:bg-white/[0.06] border border-white/10 transition-all duration-300"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.636-6.364" />
+              <path d="M21 3v6h-6" />
+            </svg>
+            re-analyze
+          </button>
+        )}
       </div>
       <motion.div
         variants={staggerContainer}

@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverExternalPackages: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+  serverExternalPackages: ["@ffmpeg/ffmpeg", "@ffmpeg/util", "sharp"],
 };
 
 export default nextConfig;

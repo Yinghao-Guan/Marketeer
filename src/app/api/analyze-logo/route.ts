@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import client from "@/lib/gemini";
 import {
   ANALYZE_LOGO_PROMPT,
@@ -6,12 +7,42 @@ import {
 } from "@/lib/prompts";
 import type { LogoRating } from "@/types/campaign";
 
+/**
+ * Composites a base64 image onto a dark background so that white/light
+ * logos on transparent backgrounds are visible to AI analysis.
+ * Returns a new base64 string (no data URL prefix).
+ */
+async function flattenOnDarkBg(base64: string): Promise<string> {
+  const buf = Buffer.from(base64, "base64");
+  const meta = await sharp(buf).metadata();
+
+  const width = meta.width || 512;
+  const height = meta.height || 512;
+
+  const darkBg = sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 26, g: 26, b: 46, alpha: 255 },
+    },
+  }).png();
+
+  const result = await darkBg
+    .composite([{ input: buf, blend: "over" }])
+    .png()
+    .toBuffer();
+
+  return result.toString("base64");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Style-only mode: just describe the logo's visual style
     if (body.describeStyleOnly) {
+      const flatLogo = await flattenOnDarkBg(body.logoBase64);
       const response = await client.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
@@ -21,7 +52,7 @@ export async function POST(req: NextRequest) {
               {
                 inlineData: {
                   mimeType: "image/png",
-                  data: body.logoBase64,
+                  data: flatLogo,
                 },
               },
               { text: DESCRIBE_STYLE_PROMPT() },
@@ -47,6 +78,13 @@ export async function POST(req: NextRequest) {
       location: string;
     };
 
+    // Flatten all logos onto dark backgrounds so white/light content
+    // on transparent backgrounds is visible to the AI
+    const flatLogo = await flattenOnDarkBg(logoBase64);
+    const flatCompetitors = await Promise.all(
+      competitorLogosBase64.map((c: string) => flattenOnDarkBg(c))
+    );
+
     // Build content parts: clearly label user logo vs competitor logos
     const parts: Array<
       { inlineData: { mimeType: string; data: string } } | { text: string }
@@ -55,16 +93,16 @@ export async function POST(req: NextRequest) {
       {
         inlineData: {
           mimeType: "image/png",
-          data: logoBase64,
+          data: flatLogo,
         },
       },
     ];
 
-    if (competitorLogosBase64.length > 0) {
+    if (flatCompetitors.length > 0) {
       parts.push({
-        text: `THE FOLLOWING ${competitorLogosBase64.length} IMAGE(S) ARE COMPETITOR LOGOS — DO NOT analyze or improve these. Only use them for comparison:`,
+        text: `THE FOLLOWING ${flatCompetitors.length} IMAGE(S) ARE COMPETITOR LOGOS — DO NOT analyze or improve these. Only use them for comparison:`,
       });
-      for (const compLogo of competitorLogosBase64) {
+      for (const compLogo of flatCompetitors) {
         parts.push({
           inlineData: {
             mimeType: "image/png",
