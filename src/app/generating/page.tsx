@@ -5,6 +5,38 @@ import { useRouter } from "next/navigation";
 import { saveCampaign } from "@/lib/store";
 import { mergeVideoAudio } from "@/lib/ffmpeg";
 
+const GENERATION_LOCK_KEY = "marketeer-generation-lock";
+const GENERATION_LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const RUNTIME_LOCK_KEY = "__marketeerGenerationRunning";
+const GENERATION_PROGRESS_KEY = "marketeer-generation-progress";
+
+declare global {
+    interface Window {
+        __marketeerGenerationRunning?: boolean;
+    }
+}
+
+interface GenerationProgress {
+    banners?: unknown;
+    jingle?: string;
+    operationId?: string;
+    video?: string;
+    voiceover?: string;
+}
+
+function loadProgress(): GenerationProgress {
+    try {
+        return JSON.parse(sessionStorage.getItem(GENERATION_PROGRESS_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function saveProgress(updates: Partial<GenerationProgress>) {
+    const current = loadProgress();
+    sessionStorage.setItem(GENERATION_PROGRESS_KEY, JSON.stringify({ ...current, ...updates }));
+}
+
 const STEPS = [
     "Crafting your banners...",
     "Composing your jingle...",
@@ -29,121 +61,188 @@ export default function GeneratingPage() {
         if (started.current) return;
         started.current = true;
 
+        if (typeof window !== "undefined" && window[RUNTIME_LOCK_KEY]) {
+            return;
+        }
+        if (typeof window !== "undefined") {
+            window[RUNTIME_LOCK_KEY] = true;
+        }
+
+        // Prevent duplicate full-generation runs in React Strict Mode dev remounts.
+        const now = Date.now();
+        const existingLock = sessionStorage.getItem(GENERATION_LOCK_KEY);
+        if (existingLock) {
+            const lockTime = Number(existingLock);
+            if (Number.isFinite(lockTime) && now - lockTime < GENERATION_LOCK_TTL_MS) {
+                if (typeof window !== "undefined") {
+                    window[RUNTIME_LOCK_KEY] = false;
+                }
+                return;
+            }
+        }
+        sessionStorage.setItem(GENERATION_LOCK_KEY, String(now));
+
         const run = async () => {
             const campaign = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
             const { proposal, styleLock, approvedLogo } = campaign;
 
             if (!proposal || !styleLock) {
                 setError("Missing campaign data. Please go back and complete the previous steps.");
+                sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                if (typeof window !== "undefined") {
+                    window[RUNTIME_LOCK_KEY] = false;
+                }
                 return;
             }
 
-            let banners, jingle, videoBase64, voiceover, finalVideo;
+            const progress = loadProgress();
+            let banners = progress.banners, jingle = progress.jingle, videoBase64 = progress.video, voiceover = progress.voiceover, finalVideo;
 
             // ── Step 0: Banners ──────────────────────────────────────────────
-            try {
-                setStep(0, "active");
-                const res = await fetch("/api/generate-banners", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        bannerConcept: proposal.bannerConcept,
-                        styleLock,
-                        logoBase64: approvedLogo ?? null,
-                        brandName: campaign.brandName || "",
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error ?? "Banner generation failed");
-                banners = data.banners;
+            if (banners) {
                 setStep(0, "done");
-            } catch (e) {
-                setStep(0, "error");
-                setError(e instanceof Error ? e.message : "Banner generation failed");
-                return;
+            } else {
+                try {
+                    setStep(0, "active");
+                    const res = await fetch("/api/generate-banners", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            bannerConcept: proposal.bannerConcept,
+                            styleLock,
+                            logoBase64: approvedLogo ?? null,
+                            brandName: campaign.brandName || "",
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? "Banner generation failed");
+                    banners = data.banners;
+                    saveProgress({ banners });
+                    setStep(0, "done");
+                } catch (e) {
+                    setStep(0, "error");
+                    setError(e instanceof Error ? e.message : "Banner generation failed");
+                    sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                    if (typeof window !== "undefined") {
+                        window[RUNTIME_LOCK_KEY] = false;
+                    }
+                    return;
+                }
             }
 
             // ── Step 1: Jingle ───────────────────────────────────────────────
-            try {
-                setStep(1, "active");
-                const res = await fetch("/api/generate-jingle", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        mood: campaign.jingleMood || "upbeat",
-                        jingleMood: proposal.jingleMood,
-                        brandName: campaign.brandName || "",
-                        industry: campaign.industry || "",
-                        tagline: proposal.tagline,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error ?? "Jingle generation failed");
-                jingle = data.audioBase64;
+            if (jingle) {
                 setStep(1, "done");
-            } catch (e) {
-                setStep(1, "error");
-                setError(e instanceof Error ? e.message : "Jingle generation failed");
-                return;
+            } else {
+                try {
+                    setStep(1, "active");
+                    const res = await fetch("/api/generate-jingle", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            mood: campaign.jingleMood || "upbeat",
+                            jingleMood: proposal.jingleMood,
+                            brandName: campaign.brandName || "",
+                            industry: campaign.industry || "",
+                            tagline: proposal.tagline,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? "Jingle generation failed");
+                    jingle = data.audioBase64;
+                    saveProgress({ jingle });
+                    setStep(1, "done");
+                } catch (e) {
+                    setStep(1, "error");
+                    setError(e instanceof Error ? e.message : "Jingle generation failed");
+                    sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                    if (typeof window !== "undefined") {
+                        window[RUNTIME_LOCK_KEY] = false;
+                    }
+                    return;
+                }
             }
 
             // ── Step 2: Video (async + poll) ─────────────────────────────────
-            try {
-                setStep(2, "active");
-                const startRes = await fetch("/api/generate-video", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        videoScene: proposal.videoScene,
-                        styleLock,
-                        logoBase64: approvedLogo ?? null,
-                        aspectRatio: "16:9",
-                    }),
-                });
-                const startData = await startRes.json();
-                if (!startRes.ok) throw new Error(startData.error ?? "Video generation failed");
-
-                const { operationId } = startData;
-                const deadline = Date.now() + 2 * 60 * 1000; // 2 minute timeout
-
-                while (Date.now() < deadline) {
-                    await new Promise((r) => setTimeout(r, 5000));
-                    const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId)}`);
-                    const pollData = await pollRes.json();
-                    if (!pollRes.ok) throw new Error(pollData.error ?? "Video poll failed");
-                    if (pollData.done) {
-                        videoBase64 = pollData.videoBase64;
-                        break;
-                    }
-                }
-
-                if (!videoBase64) throw new Error("Video generation timed out after 2 minutes");
+            if (videoBase64) {
                 setStep(2, "done");
-            } catch (e) {
-                setStep(2, "error");
-                setError(e instanceof Error ? e.message : "Video generation failed");
-                return;
+            } else {
+                try {
+                    setStep(2, "active");
+                    // Resume existing operation if one was already started
+                    let operationId = progress.operationId;
+                    if (!operationId) {
+                        const startRes = await fetch("/api/generate-video", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                videoScene: proposal.videoScene,
+                                styleLock,
+                                logoBase64: approvedLogo ?? null,
+                                aspectRatio: "16:9",
+                            }),
+                        });
+                        const startData = await startRes.json();
+                        if (!startRes.ok) throw new Error(startData.error ?? "Video generation failed");
+                        operationId = startData.operationId;
+                        saveProgress({ operationId });
+                    }
+
+                    const deadline = Date.now() + 2 * 60 * 1000; // 2 minute timeout
+
+                    while (Date.now() < deadline) {
+                        await new Promise((r) => setTimeout(r, 5000));
+                        const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId!)}`);
+                        const pollData = await pollRes.json();
+                        if (!pollRes.ok) throw new Error(pollData.error ?? "Video poll failed");
+                        if (pollData.done) {
+                            videoBase64 = pollData.videoBase64;
+                            saveProgress({ video: videoBase64 });
+                            break;
+                        }
+                    }
+
+                    if (!videoBase64) throw new Error("Video generation timed out after 2 minutes");
+                    setStep(2, "done");
+                } catch (e) {
+                    setStep(2, "error");
+                    setError(e instanceof Error ? e.message : "Video generation failed");
+                    sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                    if (typeof window !== "undefined") {
+                        window[RUNTIME_LOCK_KEY] = false;
+                    }
+                    return;
+                }
             }
 
             // ── Step 3: Voiceover ────────────────────────────────────────────
-            try {
-                setStep(3, "active");
-                const res = await fetch("/api/generate-voiceover", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        script: proposal.voiceoverScript,
-                        voiceTone: proposal.voiceTone,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error ?? "Voiceover generation failed");
-                voiceover = data.audioBase64;
+            if (voiceover) {
                 setStep(3, "done");
-            } catch (e) {
-                setStep(3, "error");
-                setError(e instanceof Error ? e.message : "Voiceover generation failed");
-                return;
+            } else {
+                try {
+                    setStep(3, "active");
+                    const res = await fetch("/api/generate-voiceover", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            script: proposal.voiceoverScript,
+                            voiceTone: proposal.voiceTone,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error ?? "Voiceover generation failed");
+                    voiceover = data.audioBase64;
+                    saveProgress({ voiceover });
+                    setStep(3, "done");
+                } catch (e) {
+                    setStep(3, "error");
+                    setError(e instanceof Error ? e.message : "Voiceover generation failed");
+                    sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                    if (typeof window !== "undefined") {
+                        window[RUNTIME_LOCK_KEY] = false;
+                    }
+                    return;
+                }
             }
 
             // ── Step 4: FFmpeg merge ─────────────────────────────────────────
@@ -154,6 +253,10 @@ export default function GeneratingPage() {
             } catch (e) {
                 setStep(4, "error");
                 setError(e instanceof Error ? e.message : "Video merge failed");
+                sessionStorage.removeItem(GENERATION_LOCK_KEY);
+                if (typeof window !== "undefined") {
+                    window[RUNTIME_LOCK_KEY] = false;
+                }
                 return;
             }
 
@@ -180,6 +283,11 @@ export default function GeneratingPage() {
                 currentStep: "dashboard",
             });
 
+            sessionStorage.removeItem(GENERATION_LOCK_KEY);
+            sessionStorage.removeItem(GENERATION_PROGRESS_KEY);
+            if (typeof window !== "undefined") {
+                window[RUNTIME_LOCK_KEY] = false;
+            }
             router.push("/dashboard");
         };
 

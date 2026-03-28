@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const prompt = IMPROVE_LOGO_PROMPT(improvement, styleLock?.style);
 
     const response = await client.models.generateContent({
-      model: "gemini-2.5-flash-image",
+      model: "gemini-2.5-flash-preview-image-generation",
       contents: [
         {
           role: "user",

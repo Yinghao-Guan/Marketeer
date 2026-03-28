@@ -43,6 +43,14 @@ export default function RatingPage() {
       return;
     }
 
+    // Use cached rating if available
+    if (campaign.logoRating && campaign.userLogo) {
+      setLogoBase64(campaign.userLogo);
+      setRating(campaign.logoRating);
+      setPhase("ready");
+      return;
+    }
+
     const run = async () => {
       try {
         let logo = campaign.userLogo;
@@ -147,19 +155,17 @@ export default function RatingPage() {
   };
 
   // ── Approve & continue ─────────────────────────────────
-  const handleApprove = async () => {
+  const handleApprove = () => {
     saveCampaignData({ approvedLogo: logoBase64 });
 
-    // Build Style Lock from the approved logo
-    try {
-      const styleLock: StyleLock = await buildStyleLock(logoBase64);
-      saveCampaignData({ styleLock });
-    } catch (e) {
-      console.error("Style lock extraction failed, continuing anyway", e);
-      saveCampaignData({
-        styleLock: { colors: ["#808080"], style: "modern, clean" },
-      });
-    }
+    // Start style lock extraction in the background — don't block navigation
+    buildStyleLock(logoBase64)
+      .then((styleLock: StyleLock) => saveCampaignData({ styleLock }))
+      .catch(() =>
+        saveCampaignData({
+          styleLock: { colors: ["#808080"], style: "modern, clean" },
+        })
+      );
 
     router.push("/proposal");
   };

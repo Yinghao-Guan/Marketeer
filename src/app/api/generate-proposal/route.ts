@@ -36,6 +36,7 @@ export async function POST(req: Request) {
 
         return Response.json(response);
     } catch (error) {
+        console.error("generate-proposal error:", error);
         return Response.json({ error: "Failed to generate proposal" }, { status: 500 });
     }
 }
