@@ -1,19 +1,86 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
+const DomeGallery = dynamic(() => import("@/components/hero/DomeGallery"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full" />,
+});
+
+const LiquidEther = dynamic(
+  () => import("@/components/LiquidEther").then((m) => ({ default: m.LiquidEther })),
+  { ssr: false }
+);
+
+const STOREFRONT_IMAGES = [
+  { src: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=774&auto=format&fit=crop", alt: "Cozy cafe exterior" },
+  { src: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=774&auto=format&fit=crop", alt: "Restaurant storefront" },
+  { src: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=774&auto=format&fit=crop", alt: "European cafe terrace" },
+  { src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=774&auto=format&fit=crop", alt: "Clothing boutique" },
+  { src: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=774&auto=format&fit=crop", alt: "Bakery shopfront" },
+  { src: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=774&auto=format&fit=crop", alt: "Restaurant interior" },
+  { src: "https://images.unsplash.com/photo-1462899006636-339e08d1844e?w=774&auto=format&fit=crop", alt: "Market stall" },
+  { src: "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=774&auto=format&fit=crop", alt: "Colorful facade" },
+  { src: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=774&auto=format&fit=crop", alt: "Shopping street" },
+  { src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=774&auto=format&fit=crop", alt: "Small business" },
+  { src: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=774&auto=format&fit=crop", alt: "Fine dining" },
+  { src: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=774&auto=format&fit=crop", alt: "Coffee shop" },
+  { src: "https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=774&auto=format&fit=crop", alt: "Flower shop" },
+  { src: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=774&auto=format&fit=crop", alt: "Fruit market" },
+  { src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=774&auto=format&fit=crop", alt: "Restaurant plating" },
+  { src: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=774&auto=format&fit=crop", alt: "Retail checkout" },
+  { src: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=774&auto=format&fit=crop", alt: "Night market" },
+  { src: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=774&auto=format&fit=crop", alt: "Latte art cafe" },
+  { src: "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=774&auto=format&fit=crop", alt: "Pizza shop" },
+  { src: "https://images.unsplash.com/photo-1578474846511-04ba529f0b88?w=774&auto=format&fit=crop", alt: "Grocery display" },
+  { src: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=774&auto=format&fit=crop", alt: "Street vendor" },
+  { src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=774&auto=format&fit=crop", alt: "Business meeting" },
+  { src: "https://images.unsplash.com/photo-1556742393-d75f468bfcb0?w=774&auto=format&fit=crop", alt: "Store interior" },
+  { src: "https://images.unsplash.com/photo-1464869372688-a93d806be852?w=774&auto=format&fit=crop", alt: "Outdoor dining" },
+  { src: "https://images.unsplash.com/photo-1507914372368-b2b085b925a1?w=774&auto=format&fit=crop", alt: "Bookshop" },
+];
+
+const fadeBlur = {
+  hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
   visible: (delay: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" as const, delay },
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.8,
+      ease: [0.32, 0.72, 0, 1],
+      delay,
+    },
   }),
 };
 
 export default function Home() {
   const router = useRouter();
+
+  const businessTypes = [
+    "restaurants",
+    "coffee shops",
+    "boutiques",
+    "barbershops",
+    "bakeries",
+    "flower shops",
+    "food trucks",
+    "yoga studios",
+    "pet stores",
+    "bookstores",
+  ];
+
+  const [typeIndex, setTypeIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTypeIndex((i) => (i + 1) % businessTypes.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [businessTypes.length]);
 
   const start = (hasLogo: boolean) => {
     sessionStorage.setItem("marketeer-campaign", JSON.stringify({ hasLogo }));
@@ -21,65 +88,166 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center gap-6">
-      <motion.h1
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0}
-        className="text-9xl tracking-tight text-white"
-        style={{
-          fontFamily: "var(--font-dirtyline)",
-          WebkitTextStroke: "2px black",
-          paintOrder: "stroke fill",
-        }}
-      >
-        Marketeer
-      </motion.h1>
-
-      <motion.p
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0.15}
-        className="text-lg text-white/50"
-      >
-        AI-powered marketing campaigns in minutes
-      </motion.p>
-
-      <motion.p
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0.3}
-        className="mt-4 text-2xl font-medium text-white/80"
-      >
-        Do you have a logo?
-      </motion.p>
-
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0.45}
-        className="flex gap-5 mt-2"
-      >
-        <button
-          onClick={() => start(true)}
-          className="rounded-xl bg-white px-10 py-4 text-lg font-semibold text-black transition-all hover:bg-white/90 hover:scale-105"
+    <div className="flex h-screen overflow-hidden">
+      {/* Left — DomeGallery */}
+      <div className="relative h-screen overflow-hidden" style={{ width: "70%" }}>
+        <DomeGallery
+          images={STOREFRONT_IMAGES}
+          fit={1}
+          minRadius={2400}
+          maxRadius={2400}
+          segments={40}
+          grayscale={false}
+          overlayBlurColor="#0a0a0a"
+          autoRotateSpeed={0.02}
+        />
+        {/* Crossfade edge */}
+        <div
+          className="absolute top-0 right-0 h-full pointer-events-none z-10"
           style={{
-            boxShadow: "0 0 30px rgba(255, 255, 255, 0.15)",
+            width: "200px",
+            background: "linear-gradient(to right, transparent, #0a0a0a)",
+          }}
+        />
+      </div>
+
+      {/* Right — Branding + CTA */}
+      <div className="relative h-screen overflow-hidden font-[family-name:var(--font-geist-sans)]" style={{ width: "30%" }}>
+        {/* Liquid Ether background */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+          <LiquidEther
+            colors={["#5227FF", "#FF9FFC", "#B19EEF"]}
+            resolution={0.35}
+            autoDemo={true}
+            autoSpeed={0.3}
+            autoIntensity={1.5}
+            mouseForce={15}
+            cursorSize={80}
+            autoResumeDelay={500}
+            autoRampDuration={0.8}
+          />
+        </div>
+        <div className="relative z-10 flex flex-col items-center justify-center h-full px-12 gap-5">
+        {/* Title */}
+        <motion.h1
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.1}
+          className="text-7xl tracking-tight text-white text-center"
+          style={{
+            fontFamily: "var(--font-dirtyline)",
+            WebkitTextStroke: "2px black",
+            paintOrder: "stroke fill",
           }}
         >
-          Yes
-        </button>
-        <button
-          onClick={() => start(false)}
-          className="rounded-xl border border-white/20 px-10 py-4 text-lg font-semibold text-white transition-all hover:bg-white/10 hover:scale-105"
+          Marketeer
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.2}
+          className="text-[13px] font-light tracking-[0.15em] uppercase text-white/40 text-center -mt-2"
         >
-          No
-        </button>
-      </motion.div>
+          AI-powered marketing campaigns in minutes
+        </motion.p>
+
+        {/* Rotating business type */}
+        <motion.div
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.3}
+          className="flex items-center justify-center gap-1.5 h-8 -mt-2"
+        >
+          <span className="text-[13px] tracking-[0.15em] uppercase font-light text-white/30">for</span>
+          <div className="relative h-5 w-[120px] overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={businessTypes[typeIndex]}
+                initial={{ y: 16, opacity: 0, filter: "blur(4px)" }}
+                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                exit={{ y: -16, opacity: 0, filter: "blur(4px)" }}
+                transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                className="text-[13px] tracking-[0.15em] uppercase font-light text-white/60 absolute left-0"
+              >
+                {businessTypes[typeIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* CTA text */}
+        <motion.p
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.4}
+          className="text-lg font-light text-white/70 text-center leading-relaxed"
+        >
+          Drop your logo. Get a full campaign.
+        </motion.p>
+
+        {/* CTA buttons */}
+        <motion.div
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.5}
+          className="flex flex-col gap-3 w-full"
+        >
+          {/* Primary: I have a logo */}
+          <button
+            onClick={() => start(true)}
+            className="group flex items-center justify-center gap-3 rounded-full bg-white pl-7 pr-2 py-2.5 text-sm font-medium tracking-wide text-black cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
+          >
+            I have a logo
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </span>
+          </button>
+
+          {/* Secondary: Make me one */}
+          <button
+            onClick={() => start(false)}
+            className="group flex items-center justify-center gap-3 rounded-full pl-7 pr-2 py-2.5 text-sm font-medium tracking-wide text-white cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.06] active:scale-[0.98]"
+            style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            Make me one
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.08] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z" />
+              </svg>
+            </span>
+          </button>
+        </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
