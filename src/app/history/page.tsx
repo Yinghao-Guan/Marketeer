@@ -11,8 +11,18 @@ import {
   saveCampaign,
   Campaign,
 } from "@/lib/store";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Upload } from "lucide-react";
 import { staggerContainer, staggerChild, fadeBlur } from "@/lib/motion";
+
+function triggerJsonDownload(data: unknown, filename: string) {
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -33,6 +43,45 @@ export default function HistoryPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  async function handleExport() {
+    const all = await getAllCampaigns();
+    if (all.length === 0) return;
+    triggerJsonDownload(all, `marketeer-campaigns-${Date.now()}.json`);
+  }
+
+  async function handleImport() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        const items: Campaign[] = Array.isArray(data) ? data : [data];
+        let imported = 0;
+        for (const item of items) {
+          if (!item.id || !item.brandName) continue;
+          // make sure createdAt is a valid date
+          item.createdAt = new Date(item.createdAt);
+          await saveCampaign(item);
+          imported++;
+        }
+        // reload the list
+        const all = await getAllCampaigns();
+        setCampaigns(all);
+        setImportStatus(`imported ${imported} campaign${imported !== 1 ? "s" : ""}`);
+        setTimeout(() => setImportStatus(null), 3000);
+      } catch {
+        setImportStatus("import failed - invalid file");
+        setTimeout(() => setImportStatus(null), 3000);
+      }
+    };
+    input.click();
+  }
 
   const navigateToCampaign = (c: Campaign) => {
     switch (c.currentStep) {
@@ -137,12 +186,24 @@ export default function HistoryPage() {
         <p className="text-sm text-white/30 max-w-xs">
           create your first campaign to see it here.
         </p>
-        <Link
-          href="/"
-          className="mt-2 px-6 py-2 rounded-full bg-white text-black text-sm font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        >
-          Get started
-        </Link>
+        <div className="flex items-center gap-3 mt-2">
+          <Link
+            href="/"
+            className="px-6 py-2 rounded-full bg-white text-black text-sm font-medium hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          >
+            get started
+          </Link>
+          <button
+            onClick={handleImport}
+            className="flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 text-white/50 text-sm font-medium hover:text-white hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          >
+            <Download className="w-4 h-4" />
+            import
+          </button>
+        </div>
+        {importStatus && (
+          <p className="text-sm text-white/50 mt-2">{importStatus}</p>
+        )}
       </div>
     );
   }
@@ -178,22 +239,50 @@ export default function HistoryPage() {
               {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-transparent text-white text-sm font-semibold hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 bg-transparent text-white/50 text-sm font-medium hover:text-white hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
             >
-              <path d="M12 4v16m8-8H4" />
-            </svg>
-            new campaign
-          </Link>
+              <Upload className="w-4 h-4" />
+              export
+            </button>
+            <button
+              onClick={handleImport}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 bg-transparent text-white/50 text-sm font-medium hover:text-white hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            >
+              <Download className="w-4 h-4" />
+              import
+            </button>
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-transparent text-white text-sm font-semibold hover:bg-white/[0.06] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 4v16m8-8H4" />
+              </svg>
+              new campaign
+            </Link>
+          </div>
         </motion.div>
+
+        {/* Import status toast */}
+        {importStatus && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="px-4 py-2 rounded-full bg-white/10 text-white/70 text-sm text-center w-fit mx-auto"
+          >
+            {importStatus}
+          </motion.div>
+        )}
 
         {/* Grid */}
         <motion.div
