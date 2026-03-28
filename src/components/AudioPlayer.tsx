@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
-  /** base64-encoded audio string (wav/mp3) */
+  /** base64-encoded WAV string */
   src: string;
   label?: string;
-}
-
-function inferAudioMime(base64: string): string {
-  if (base64.startsWith("UklGR")) return "audio/wav"; // RIFF
-  if (base64.startsWith("SUQz") || base64.startsWith("//uQ")) return "audio/mpeg"; // ID3 / MP3 frame sync
-  return "audio/mpeg";
 }
 
 function formatTime(seconds: number): string {
@@ -23,26 +17,25 @@ function formatTime(seconds: number): string {
 
 export default function AudioPlayer({ src, label }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  const objectUrl = useMemo(() => {
-    if (!src) return null;
-    // Data URLs already include MIME type — use directly
-    if (src.startsWith("data:")) return src;
-    const bytes = Uint8Array.from(atob(src), (c) => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: inferAudioMime(src) });
-    return URL.createObjectURL(blob);
-  }, [src]);
-
-  // Revoke object URL when source changes/unmounts (no-op for data URLs)
+  // Convert base64 → Blob → object URL; revoke on cleanup or src change
   useEffect(() => {
-    if (!objectUrl || objectUrl.startsWith("data:")) return;
+    if (!src) return;
+    const bytes = Uint8Array.from(atob(src), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: "audio/wav" });
+    const url = URL.createObjectURL(blob);
+    setObjectUrl(url);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      URL.revokeObjectURL(url);
     };
-  }, [objectUrl]);
+  }, [src]);
 
   // Wire audio element events
   useEffect(() => {
@@ -92,7 +85,7 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
       )}
 
       {/* Hidden audio element */}
-      <audio ref={audioRef} src={objectUrl ?? undefined} preload="auto" />
+      <audio ref={audioRef} src={objectUrl ?? undefined} preload="metadata" />
 
       {/* Controls */}
       <div className="flex items-center gap-3">

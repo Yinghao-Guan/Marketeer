@@ -5,16 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
-import { staggerContainer, staggerChild } from "@/lib/motion";
+import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
-type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "ready" | "error";
-
-interface LogoHistoryEntry {
-  logoBase64: string;
-  rating: LogoRating;
-  improvement?: string;
-}
+type Phase = "loading" | "generating-logo" | "analyzing" | "ready" | "error";
 
 export default function RatingPage() {
   const router = useRouter();
@@ -24,7 +18,6 @@ export default function RatingPage() {
   const [logoBase64, setLogoBase64] = useState("");
   const [rating, setRating] = useState<LogoRating | null>(null);
   const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
-  const [logoHistory, setLogoHistory] = useState<LogoHistoryEntry[]>([]);
 
   // Pull campaign state from sessionStorage (set by onboarding pages)
   const getCampaignData = useCallback(() => {
@@ -50,11 +43,6 @@ export default function RatingPage() {
       setError("No campaign data found. Please start from the beginning.");
       setPhase("error");
       return;
-    }
-
-    // Load history if available
-    if (campaign.logoHistory) {
-      setLogoHistory(campaign.logoHistory);
     }
 
     // Use cached rating if available
@@ -107,12 +95,6 @@ export default function RatingPage() {
 
         setRating(ratingData);
         saveCampaignData({ logoRating: ratingData });
-
-        // Save initial logo to history
-        const initialEntry: LogoHistoryEntry = { logoBase64: logo, rating: ratingData };
-        setLogoHistory([initialEntry]);
-        saveCampaignData({ logoHistory: [initialEntry] });
-
         setPhase("ready");
       } catch (e) {
         console.error(e);
@@ -125,11 +107,10 @@ export default function RatingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Apply improvement ─────────────────────────────────
+  // ── Apply improvement ───���──────────────────────────────
   const handleApplyImprovement = async (index: number) => {
     if (!rating || !logoBase64) return;
     setApplyingIndex(index);
-    setPhase("improving");
 
     try {
       const improvement = rating.improvements[index];
@@ -166,39 +147,16 @@ export default function RatingPage() {
 
       setRating(newRating);
       saveCampaignData({ logoRating: newRating });
-
-      // Add to history
-      const entry: LogoHistoryEntry = {
-        logoBase64: newLogo,
-        rating: newRating,
-        improvement: improvement.suggestion,
-      };
-      const updatedHistory = [...logoHistory, entry];
-      setLogoHistory(updatedHistory);
-      saveCampaignData({ logoHistory: updatedHistory });
-
       setPhase("ready");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Improvement failed");
-      setPhase("error");
     } finally {
       setApplyingIndex(null);
     }
   };
 
-  // ── Revert to previous logo ───────────────────────────
-  const handleRevert = (historyIndex: number) => {
-    const entry = logoHistory[historyIndex];
-    setLogoBase64(entry.logoBase64);
-    setRating(entry.rating);
-    saveCampaignData({
-      userLogo: entry.logoBase64,
-      logoRating: entry.rating,
-    });
-  };
-
-  // ── Approve & continue ────────────────────────────────
+  // ── Approve & continue ────────────��────────────────────
   const handleApprove = () => {
     saveCampaignData({ approvedLogo: logoBase64 });
 
@@ -214,7 +172,7 @@ export default function RatingPage() {
     router.push("/proposal");
   };
 
-  // ── Render ────────────────────────────────────────────
+  // ── Render ──────��─────────────────────��────────────────
   return (
     <main className="min-h-screen text-white">
       <motion.div
@@ -229,26 +187,21 @@ export default function RatingPage() {
             ? "Generating your logo..."
             : phase === "analyzing"
               ? "Analyzing your logo with AI..."
-              : phase === "improving"
-                ? "Applying improvement to your logo..."
-                : phase === "ready"
-                  ? "Here's how your logo performs across formats"
-                  : ""}
+              : phase === "ready"
+                ? "Here's how your logo performs across formats"
+                : ""}
         </motion.p>
 
         {/* Loading / generating states */}
         {(phase === "loading" ||
           phase === "generating-logo" ||
-          phase === "analyzing" ||
-          phase === "improving") && (
+          phase === "analyzing") && (
           <div className="flex flex-col items-center gap-4 py-16">
             <div className="w-10 h-10 border-2 border-white border-t-[#5227FF] rounded-full animate-spin" />
             <p className="text-white/50 text-sm">
               {phase === "generating-logo"
                 ? "Creating a logo for your brand..."
-                : phase === "improving"
-                  ? "Refining your logo based on feedback..."
-                  : "Running marketing analysis..."}
+                : "Running marketing analysis..."}
             </p>
           </div>
         )}
@@ -289,46 +242,6 @@ export default function RatingPage() {
                 applyingIndex={applyingIndex}
               />
             </motion.div>
-
-            {/* Logo History */}
-            {logoHistory.length > 1 && (
-              <motion.div variants={staggerChild} className="mt-8 rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-white mb-3">
-                  Generation History
-                </h3>
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {logoHistory.map((entry, i) => {
-                    const isActive = entry.logoBase64 === logoBase64;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleRevert(i)}
-                        className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                          isActive
-                            ? "ring-2 ring-white bg-white/10"
-                            : "hover:bg-white/5"
-                        }`}
-                      >
-                        <div className="w-16 h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`data:image/png;base64,${entry.logoBase64}`}
-                            alt={`Version ${i + 1}`}
-                            className="max-w-full max-h-full object-contain"
-                          />
-                        </div>
-                        <span className="text-xs text-white/50">
-                          v{i + 1}
-                        </span>
-                        <span className="text-xs font-semibold text-green-500">
-                          {entry.rating.overallRating.toFixed(1)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
 
             {/* Approve button */}
             <motion.div variants={staggerChild} className="mt-8 flex justify-center">
