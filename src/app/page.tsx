@@ -250,7 +250,7 @@ export default function Home() {
         {/* Spacer to push logos to bottom */}
         <div className="flex-1" />
 
-        {/* Built for hackathon strip */}
+        {/* Hackathon credit strip */}
         <motion.div
           variants={fadeBlur}
           initial="hidden"
@@ -259,7 +259,7 @@ export default function Home() {
           className="w-full pb-8"
         >
           <p className="text-[13px] tracking-[0.15em] uppercase font-light text-white/50 text-center mb-4">
-            Built for
+            made possible by
           </p>
           <LogoLoop
             logos={HACKATHON_LOGOS}
