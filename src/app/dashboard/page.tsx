@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import JSZip from "jszip";
 import AssetCard from "@/components/AssetCard";
 import AudioPlayer from "@/components/AudioPlayer";
+import LyricsPlayer from "@/components/LyricsPlayer";
 import VideoPlayer from "@/components/VideoPlayer";
 import {
   initDB,
@@ -213,6 +214,23 @@ function DashboardContent() {
       const jingle = `data:${mime};base64,${data.audioBase64}`;
       await updateCampaign(campaign.id, { jingle });
       setCampaign((c) => c && { ...c, jingle });
+
+      // transcribe lyrics for the new jingle
+      try {
+        const lyricsRes = await fetch("/api/transcribe-lyrics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioBase64: data.audioBase64, mimeType: mime }),
+        });
+        const lyricsData = await lyricsRes.json();
+        if (lyricsData.lines?.length) {
+          const lyrics = { lines: lyricsData.lines };
+          await updateCampaign(campaign.id, { lyrics });
+          setCampaign((c) => c && { ...c, lyrics });
+        }
+      } catch (e) {
+        console.warn("lyrics transcription failed:", e);
+      }
     } catch (e) {
       console.error("Jingle regeneration failed:", e);
     } finally {
@@ -624,7 +642,7 @@ function DashboardContent() {
             onDownload={campaign.jingle ? () => triggerDownload(campaign.jingle!, "audio/wav", "jingle.wav") : undefined}
           >
             {campaign.jingle ? (
-              <AudioPlayer src={campaign.jingle} />
+              <LyricsPlayer src={campaign.jingle} lyrics={campaign.lyrics} />
             ) : (
               <p className="text-white/30 text-sm">no jingle generated</p>
             )}

@@ -6,6 +6,22 @@ export interface Banner {
   imageBase64: string;
 }
 
+export interface LyricWord {
+  word: string;
+  startTime: number;
+  endTime: number;
+}
+
+export interface LyricLine {
+  words: LyricWord[];
+  startTime: number;
+  endTime: number;
+}
+
+export interface LyricsData {
+  lines: LyricLine[];
+}
+
 export interface StyleLock {
   colors: string[];
   style: string;
@@ -63,6 +79,7 @@ export interface Campaign {
   // Generated assets
   banners?: Banner[];
   jingle?: string;
+  lyrics?: LyricsData;
   video?: string;
   voiceover?: string;
   finalVideo?: string;

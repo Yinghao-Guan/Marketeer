@@ -45,6 +45,24 @@ export interface CampaignProposal {
   voiceTone: string;
 }
 
+// ── Lyrics ───────────────────────────────────────────────
+
+export interface LyricWord {
+  word: string;
+  startTime: number; // milliseconds
+  endTime: number;   // milliseconds
+}
+
+export interface LyricLine {
+  words: LyricWord[];
+  startTime: number; // milliseconds
+  endTime: number;   // milliseconds
+}
+
+export interface LyricsData {
+  lines: LyricLine[];
+}
+
 // ── Assets ───────────────────────────────────────────────
 
 export interface Banner {
@@ -79,6 +97,7 @@ export interface Campaign {
   // Generated assets
   banners?: Banner[];
   jingle?: string;
+  lyrics?: LyricsData;
   video?: string;
   voiceover?: string;
   finalVideo?: string;
