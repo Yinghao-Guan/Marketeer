@@ -94,3 +94,35 @@ The learner was significantly more engaged in this phase:
 - Named the app "Marketeer" unprompted
 - Pushed back on rebalancing the team split — wanted to keep original assignments
 - Asked for suggestions on styling but set a clear bar ("look sexy, no basic hover animations")
+
+## /checklist
+
+### Sequencing decisions and rationale
+- Scaffold first (everyone depends on it) → layout + animated background (the shell) → landing page (something visible fast) → FileUpload component (reused by 2 pages) → onboarding pages in user-flow order → transitions as a polish pass at the end
+- FileUpload built before the pages that use it to avoid duplication and rework
+- StepWizard/transitions saved for last because the pages need to exist before you can polish the transitions between them
+
+### Methodology preferences
+- No enforced git commit cadence — learner doesn't want workflow overhead baked in
+- Balanced check-in cadence — explain the "why" but keep moving
+- Verification via dev server visual confirmation after each step
+
+### Item count and estimated build time
+- 10 items total (9 build steps + demo video)
+- Each step estimated at 15-30 minutes → ~3-4 hours total build time
+- Scoped specifically to Person 1's ownership (onboarding + UI shell)
+
+### What the learner was confident about vs needed guidance on
+- Didn't engage with the sequencing question ("i dont really care") — accepted the proposed order without pushback
+- Didn't want git cadence built into the checklist ("do not worry abt that")
+- Quick, decisive on preferences — chose "balanced" for check-in cadence without deliberation
+- Identified both the animated background AND smooth transitions as the demo wow moments — good instinct for demo impact
+
+### Demo video planning notes
+- Person 1's section covers the first ~30 seconds of the demo
+- Two wow moments: animated background (first impression) and smooth onboarding transitions (polish feel)
+- Demo video is a full-team effort after all branches merge
+- Referenced Devpost demo video tips link for the team
+
+### Active shaping
+- The learner did NOT engage with sequencing logic — accepted the proposed order. This is consistent with their pattern of moving fast and not belaboring decisions they trust the agent to handle. They were more engaged in earlier phases (/scope, /prd) where the creative and product decisions lived.
