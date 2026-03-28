@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FileUpload from "@/components/FileUpload";
 import StepWizard from "@/components/StepWizard";
 
 export default function UploadLogoPage() {
+  const router = useRouter();
   const [files, setFiles] = useState<string[]>([]);
+
+  const handleNext = () => {
+    const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
+    // FileUpload returns data URLs — strip prefix to get raw base64
+    const userLogo = files[0]?.split(",")[1] ?? null;
+    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, userLogo }));
+    router.push("/onboarding/competitors");
+  };
 
   return (
     <StepWizard>
@@ -23,12 +32,12 @@ export default function UploadLogoPage() {
             label="Drop your logo here, or click to browse"
           />
           {files.length > 0 && (
-            <Link
-              href="/onboarding/competitors"
+            <button
+              onClick={handleNext}
               className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
             >
               Next
-            </Link>
+            </button>
           )}
         </div>
       </div>
