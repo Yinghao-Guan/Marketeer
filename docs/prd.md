@@ -8,139 +8,139 @@ People who need marketing materials — small business owners, entrepreneurs, cr
 ### Epic: Onboarding & Brand Input
 
 - As a new user, I want to tell the app whether I already have a logo so that I get the right flow for my situation.
-  - [ ] First screen shows a clear "Do you have a logo?" prompt with Yes/No options
-  - [ ] Selecting "Yes" takes me to the logo upload flow
-  - [ ] Selecting "No" takes me to the logo generation flow
+  - [x] First screen shows "I have a logo" / "Make me one" buttons (landing page)
+  - [x] Selecting "I have a logo" takes me to onboarding with logo upload as first step
+  - [x] Selecting "Make me one" takes me to onboarding (logo is generated later at the rating page)
 
 - As a user with a logo, I want to upload my existing logo so the app can work with it.
-  - [ ] I can upload an image file of my logo
-  - [ ] The uploaded logo displays back to me so I can confirm it's correct
-  - [ ] After uploading, I'm prompted to upload competitor logos
+  - [x] I can upload an image file of my logo (LogoSection in onboarding puzzle)
+  - [x] The uploaded logo displays back to me so I can confirm it's correct
+  - [x] After uploading, I'm prompted to upload competitor logos (next puzzle step)
 
 - As a user without a logo, I want to provide my business details so the app can create a logo for me.
-  - [ ] After selecting "No," I'm asked for my business location
-  - [ ] Then I'm asked to select my industry from a list of categories
-  - [ ] Then I'm prompted to upload competitor logos
-  - [ ] The app generates a logo based on my industry, location, and competitor analysis
+  - [x] Both paths go through the same onboarding steps (logo upload is optional when hasLogo=false)
+  - [x] I'm asked for my business location and industry
+  - [x] I'm prompted to upload competitor logos
+  - [x] The rating page generates a logo based on my industry, location, and competitor analysis
 
 - As any user, I want to upload my competitors' logos/marketing material so the app can make my brand visually distinct.
-  - [ ] I can upload one or more images of competitor logos, flyers, or storefront photos
-  - [ ] The app analyzes competitor colors, style, and visual identity
-  - [ ] This analysis feeds into all generated assets to ensure differentiation
+  - [x] I can upload one or more images of competitor logos, flyers, or storefront photos (CompetitorSection)
+  - [x] The app analyzes competitor colors, style, and visual identity (via /api/analyze-logo)
+  - [x] This analysis feeds into all generated assets to ensure differentiation
 
 - As a user with a logo, I want to enter my business location so the app has geographic context.
-  - [ ] A screen asks for my business location (city/region)
-  - [ ] Location is used to inform the tone and style of the campaign
+  - [x] A step asks for my business location (city/region) — LocationSection in onboarding
+  - [x] Location is used to inform the tone and style of the campaign
 
 - As a user with a logo, I want to select my industry so the app understands my market.
-  - [ ] A screen shows industry categories I can pick from (restaurant, retail, tech, political campaign, etc.)
-  - [ ] Industry selection influences the style, language, and scene choices in generated assets
+  - [x] A step shows 10 industry categories to pick from (IndustrySection)
+  - [x] Industry selection influences the style, language, and scene choices in generated assets
 
 ### Epic: Logo Rating & Improvement
 
 - As a user who uploaded a logo, I want the app to rate my logo's marketing effectiveness so I know if it needs improvement.
-  - [ ] After all inputs are gathered, the app displays a rating for my logo
-  - [ ] The rating evaluates how well the logo will work across marketing formats (banners, video, print)
-  - [ ] The rating includes specific reasoning (e.g., "colors don't pop at small sizes," "too similar to competitor X's palette")
-  - [ ] If the logo rates low on a specific format, the reasoning explains why
+  - [x] After all inputs are gathered, the rating page displays a rating for my logo
+  - [x] The rating evaluates how well the logo will work across marketing formats (banner, video, social)
+  - [x] The rating includes specific reasoning for each format
+  - [x] If the logo rates low on a specific format, the reasoning explains why
 
 - As a user with a low-rated logo, I want the app to suggest specific improvements so I can strengthen my brand.
-  - [ ] The app suggests actionable changes (different colors, higher contrast, simpler design, etc.)
-  - [ ] Each suggestion explains the marketing reason behind it (e.g., "brighter colors perform better in online banner ads")
-  - [ ] The app offers to apply the improvements automatically using Nano Banana
-  - [ ] After improvements, the logo is re-rated to show the difference
+  - [x] The app suggests actionable changes with priority levels
+  - [x] Each suggestion explains the marketing reason behind it
+  - [x] The app offers to apply the improvements automatically using Nano Banana
+  - [x] After improvements, the logo is re-rated to show the difference (logo history tracked)
 
 - As a user who had a logo generated, I want to approve or regenerate it before moving on.
-  - [ ] The generated logo displays with its rating
-  - [ ] I can approve it or request a new generation
-  - [ ] Once approved, the logo is locked in for the rest of the campaign
+  - [x] The generated logo displays with its rating
+  - [x] I can approve it and continue to the proposal
+  - [x] Once approved, the logo is locked in for the rest of the campaign (Style Lock extracted)
 
 ### Epic: Campaign Proposal
 
 - As a user with an approved logo, I want to see a campaign proposal before anything is generated so I can steer the direction.
-  - [ ] The proposal shows on one screen as a creative brief with:
+  - [x] The proposal shows on one screen as a creative brief with:
     - Tagline in prominent text
-    - Color palette swatches from the Style Lock
     - Banner concept (one sentence describing what the posters will look like)
     - Jingle mood and genre description
     - Video scene description (camera angles, setting, action)
     - Voiceover script (the actual words TTS will say)
-  - [ ] I can approve the entire proposal to trigger generation
-  - [ ] I can request changes — the LLM revises and presents an updated proposal
-  - [ ] No API calls for heavy generation (images, music, video) happen until I approve
+  - [x] I can approve the entire proposal to trigger generation
+  - [x] I can request changes — the LLM revises and presents an updated proposal
+  - [x] No API calls for heavy generation happen until I approve
 
 - As a user reviewing the proposal, I want the tagline to feel unique to my brand so it's memorable.
-  - [ ] The tagline is generated based on brand name, industry, location, and mood
-  - [ ] It's short and punchy (under 10 words)
-  - [ ] If I don't like it, I can ask for alternatives without re-doing the whole proposal
+  - [x] The tagline is generated based on brand name, industry, location, and style
+  - [x] It's short and punchy
+  - [x] I can revise the proposal to get a new tagline
 
 ### Epic: Asset Generation
 
 - As a user who approved the proposal, I want banners/posters generated in multiple formats so I have assets ready for different platforms.
-  - [ ] The app generates three banner formats automatically:
+  - [x] The app generates three banner formats automatically:
     - 1:1 square (Instagram, Facebook)
     - 16:9 landscape (website header, YouTube)
     - 9:16 portrait (Instagram Stories, TikTok)
-  - [ ] All banners use the Style Lock colors and visual identity from the approved logo
-  - [ ] Banners are generated at 1K resolution to conserve API tokens
-  - [ ] Banners visually differentiate from uploaded competitor material
+  - [x] All banners use the Style Lock colors and visual identity from the approved logo
+  - [x] Banners are generated via Nano Banana (3 parallel calls)
+  - [x] Banners visually differentiate from uploaded competitor material
 
 - As a user, I want a jingle created for my brand so I have audio branding.
-  - [ ] Before generation, I pick a mood (upbeat, chill, dramatic, bold, etc.)
-  - [ ] Lyria generates a 30-second jingle based on the brand info, industry, and selected mood
-  - [ ] Lyria writes original lyrics inspired by the brand — not forced to use the tagline verbatim
-  - [ ] The jingle plays back in an audio player for me to preview
+  - [x] Jingle mood is part of the campaign proposal
+  - [x] Lyria 3 Clip generates music based on brand info, industry, and mood-based BPM
+  - [x] The jingle plays back in an AudioPlayer component for preview
 
 - As a user, I want a video ad created for my brand so I have a promo clip.
-  - [ ] Veo generates a unique scene based on the brand's industry, location, and vibe — not a cookie-cutter template
-  - [ ] The scene description is crafted by the LLM (e.g., tracking shot through a restaurant, aerial of a neighborhood for a political campaign)
-  - [ ] The video uses the approved logo and Style Lock colors as reference images for visual consistency
-  - [ ] Video is generated at 720p, 4-8 seconds long
+  - [x] Veo 3.1 generates a unique scene based on the brand's industry, location, and vibe
+  - [x] The scene description is crafted by the LLM as part of the proposal
+  - [x] The video uses the approved logo as a reference image for visual consistency
+  - [x] Video generation is async (operation ID + polling via /api/check-video)
 
 - As a user, I want a voiceover added to my video ad so it feels professional.
-  - [ ] TTS reads the voiceover script from the approved proposal
-  - [ ] The voice tone matches the brand energy (e.g., warm for a restaurant, bold for a sports brand)
+  - [x] TTS reads the voiceover script from the approved proposal
+  - [x] Voice tone matches brand energy via voice mapping (warm→Kore, bold→Charon, energetic→Puck, calm→Zephyr)
 
 ### Epic: Loading & Progress
 
 - As a user waiting for assets to generate, I want to see meaningful progress so I know the app isn't broken.
-  - [ ] A progress indicator shows which asset is currently being generated
-  - [ ] Progress messages name the step: "Crafting your banners..." → "Composing your jingle..." → "Filming your ad..." → "Recording your voiceover..."
-  - [ ] The screen feels intentional and polished, not a generic spinner
+  - [x] Inline progress tracker on the proposal page shows which asset is currently generating
+  - [x] Progress messages name the step: "Crafting your banners..." → "Composing your jingle..." → "Filming your ad..." → "Recording your voiceover..." → "Putting it all together..."
+  - [x] Each step shows status (waiting/active/done/error)
 
 ### Epic: Campaign Dashboard
 
 - As a user whose campaign is complete, I want to see all my assets on one dashboard so I can review everything together.
-  - [ ] The dashboard displays:
+  - [x] The dashboard displays:
     - Logo at the top
     - All banner formats in a gallery view
-    - Audio player for the jingle
-    - Video player for the ad (with voiceover)
+    - AudioPlayer for the jingle
+    - VideoPlayer for the ad (video + voiceover merged via FFmpeg WASM)
     - Tagline and voiceover script as text
-  - [ ] I can click into each asset to see it full-size or full-screen
+  - [x] Dashboard loads campaign from IndexedDB (by ID or latest)
 
 - As a user reviewing my dashboard, I want to regenerate individual assets without redoing the whole campaign.
-  - [ ] Each asset has a "Regenerate" button
-  - [ ] Regenerating one asset doesn't affect the others
-  - [ ] The regenerated asset still respects the Style Lock and brand context
+  - [x] Each asset has a "Regenerate" button
+  - [x] Regenerating one asset doesn't affect the others
+  - [x] The regenerated asset still respects the Style Lock and brand context
 
 - As a user, I want to download all my campaign assets so I can use them outside the app.
-  - [ ] A "Download All" button bundles every asset (logo, banners, jingle audio, video, voiceover script) into a single download
-  - [ ] I can also download individual assets one at a time
+  - [x] A "Download All" button bundles assets into a zip (JSZip)
+  - [x] Individual download buttons per asset
 
 ## What We're Building
 
 The complete user journey described above:
-1. **Onboarding flow** — two paths (has logo / no logo), location, industry, competitor upload
-2. **Logo rating system** — Gemini Vision analyzes logo effectiveness across formats, provides reasoning and improvement suggestions, can auto-improve via Nano Banana
-3. **Style Lock** — extracts color palette and visual style from approved logo, injects into all subsequent generation prompts
-4. **Campaign proposal screen** — LLM-generated creative brief showing tagline, color palette, banner/jingle/video/voiceover plans. User approves or revises before generation starts
-5. **Multi-format banner generation** — three aspect ratios (1:1, 16:9, 9:16) at 1K resolution via Nano Banana
-6. **Jingle generation** — user picks mood, Lyria 3 Clip generates a 30-second branded jingle with original lyrics
-7. **Video ad generation** — Veo creates a unique, industry-specific scene using the brand's reference images and Style Lock
-8. **Voiceover** — TTS narrates the approved script over the video
-9. **Progress indicators** — named loading states for each generation step
-10. **Campaign dashboard** — all assets displayed together, per-asset regeneration, individual and bulk download
+1. **Landing page** — DomeGallery + LiquidEther background, "I have a logo" / "Make me one" CTA
+2. **Onboarding flow** — single puzzle page with 4 steps (logo, competitors, location, industry), review grid, then "Generate Campaign"
+3. **Logo rating system** — Gemini Vision analyzes logo effectiveness across formats, provides reasoning and improvement suggestions, can auto-improve via Nano Banana
+4. **Style Lock** — extracts color palette and visual style from approved logo, injects into all subsequent generation prompts
+5. **Campaign proposal screen** — LLM-generated creative brief showing tagline, banner/jingle/video/voiceover plans. User approves or revises before generation starts
+6. **Inline asset generation** — generation happens on the proposal page with 5-step progress tracker (banners → jingle → video → voiceover → merge)
+7. **Multi-format banner generation** — three aspect ratios (1:1, 16:9, 9:16) via Nano Banana
+8. **Jingle generation** — Lyria 3 Clip generates music based on mood and brand context
+9. **Video ad generation** — Veo 3.1 creates a unique, industry-specific scene using the brand's reference images
+10. **Voiceover** — TTS narrates the approved script, merged with video via FFmpeg WASM
+11. **Campaign dashboard** — all assets displayed together, per-asset regeneration, individual and bulk download (JSZip)
+12. **Campaign history** — view and manage past campaigns saved in IndexedDB
 
 **GenMedia models used:** Nano Banana (logos, banners), Lyria (jingle), Veo (video ad), TTS (voiceover) — 4 out of 5 required models.
 
@@ -163,10 +163,10 @@ The complete user journey described above:
 - **4K resolution assets** — 1K for images and 720p for video to conserve API tokens. Mention 4K as a premium feature in presentation.
 - **Multiple campaign variations** — one campaign per session. No A/B testing or variant generation.
 
-## Open Questions
+## Open Questions (Resolved)
 
-- **App name** — "CampaignForge" is a placeholder. Team should pick a name they're excited about. (Resolve before building the landing page.)
-- **Industry category list** — how many categories and what are they? Need to define the exact list before building the selector. (Resolve before /spec.)
-- **Veo model version** — Veo 2 and 3.0 are deprecated, Veo 3.1 is recommended. Need to confirm API access for the hackathon. (Resolve before /build.)
-- **Jingle length** — 30-second clip (Lyria 3 Clip) is the plan, but if the team gets early access to Lyria 3 Pro, a full song could be a differentiator. (Can wait until build.)
-- **Video + voiceover sync** — TTS and Veo generate separately. How do we combine the audio with the video? Need to figure out if this is a frontend merge or a backend stitch. (Resolve during /spec.)
+- **App name** — Resolved: **Marketeer**
+- **Industry category list** — Resolved: 10 categories (Restaurant / Food & Drink, Retail / Shopping, Tech / Software, Health & Wellness, Education, Real Estate, Political Campaign, Entertainment / Events, Professional Services, Other with text input)
+- **Veo model version** — Resolved: Using `veo-3.1-generate-preview`
+- **Jingle length** — Resolved: Using Lyria 3 Clip (`lyria-3-clip`) with mood-based BPM
+- **Video + voiceover sync** — Resolved: Client-side merge using @ffmpeg/ffmpeg WASM. FFmpeg binaries served from `public/ffmpeg/`. COOP/COEP headers set in `next.config.ts` for SharedArrayBuffer support.

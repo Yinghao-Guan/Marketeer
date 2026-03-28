@@ -109,6 +109,51 @@ export default function OnboardingPage() {
 
   return (
     <StepWizard>
+      {/* ── Progress indicator ── */}
+      {!isAssembled && (
+        <div className="flex items-center justify-center gap-0 px-4 pt-4 sm:pt-6">
+          {SLOTS.map((slot, i) => {
+            const isCompleted = i < currentStep;
+            const isCurrent = i === currentStep;
+            return (
+              <div key={slot} className="flex items-center">
+                {/* Step dot + label */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                      isCurrent
+                        ? "bg-white scale-125 shadow-[0_0_12px_rgba(255,255,255,0.4)]"
+                        : isCompleted
+                          ? "bg-white/50"
+                          : "bg-white/15"
+                    }`}
+                  />
+                  <span
+                    className={`text-[11px] tracking-wide capitalize transition-colors duration-500 ${
+                      isCurrent
+                        ? "text-white/80"
+                        : isCompleted
+                          ? "text-white/40"
+                          : "text-white/20"
+                    }`}
+                  >
+                    {slot === "competitor" ? "rivals" : slot}
+                  </span>
+                </div>
+                {/* Connector line */}
+                {i < SLOTS.length - 1 && (
+                  <div
+                    className={`w-10 sm:w-16 h-px mb-5 mx-1.5 transition-colors duration-500 ${
+                      i < currentStep ? "bg-white/30" : "bg-white/10"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-col flex-1 items-center justify-center px-4">
         <LayoutGroup>
           {/* ── Assembled puzzle grid (step 4) ── */}

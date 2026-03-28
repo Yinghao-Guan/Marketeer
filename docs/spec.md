@@ -4,11 +4,13 @@
 
 | Layer | Choice | Rationale |
 |-------|--------|-----------|
-| **Framework** | Next.js (App Router) | Frontend + API routes in one framework. Team already chose it. |
+| **Framework** | Next.js 16 (App Router) | Frontend + API routes in one framework. Turbopack for dev, React Compiler enabled. |
 | **Language** | TypeScript | Type safety across frontend and API routes |
-| **Styling** | Tailwind CSS | Utility-first, pairs with shadcn/ui |
+| **Styling** | Tailwind CSS 4 | Utility-first via `@tailwindcss/postcss`. No `tailwind.config.ts` — Tailwind 4 uses PostCSS-based config. |
 | **UI Components** | shadcn/ui | Clean component primitives (buttons, cards, inputs) |
-| **Animations** | React Bits (reactbits.dev) + Framer Motion | Animated backgrounds (Grainient) and page transitions |
+| **Animations** | Framer Motion + custom WebGL | LiquidEther (fluid sim) and DomeGallery (Three.js dome) for backgrounds; Framer Motion LayoutGroup for puzzle transitions |
+| **3D / WebGL** | Three.js | Powers the DomeGallery storefront photo dome on the landing page |
+| **Icons** | lucide-react | SVG icon components used across the UI |
 | **Display Font** | Dirtyline 36daysoftype 2022 (local, `public/fonts/`) | Decorative font for "Marketeer" title. Bundled as woff2 via `next/font/local`. |
 | **AI SDK** | @google/genai | Single SDK for all Google GenMedia models |
 | **Video/Audio Merge** | @ffmpeg/ffmpeg (WASM) | Client-side video+voiceover merge, no server dependency |
@@ -18,8 +20,8 @@
 **Documentation links:**
 - [Next.js App Router](https://nextjs.org/docs/app)
 - [shadcn/ui](https://ui.shadcn.com)
-- [React Bits](https://reactbits.dev)
 - [Framer Motion](https://motion.dev)
+- [Three.js](https://threejs.org/docs/)
 - [@google/genai SDK](https://www.npmjs.com/package/@google/genai)
 - [@ffmpeg/ffmpeg WASM](https://www.npmjs.com/package/@ffmpeg/ffmpeg)
 - [idb (IndexedDB wrapper)](https://www.npmjs.com/package/idb)
@@ -29,7 +31,7 @@
 
 - **Runtime:** Node.js 20+
 - **Deployment:** Vercel (free tier — 60s serverless timeout, sufficient for most routes)
-- **Environment variables:** `GEMINI_API_KEY` (from [Google AI Studio](https://aistudio.google.com/app/apikey))
+- **Environment variables:** `GEMINI_API_KEY` in `.env` (from [Google AI Studio](https://aistudio.google.com/app/apikey))
 - **Demo:** Live URL on Vercel + screen recording for Devpost submission
 
 ## Architecture Overview
@@ -84,42 +86,31 @@
 Implements `prd.md > Onboarding & Brand Input`, `prd.md > Logo Rating & Improvement`, `prd.md > Campaign Proposal`, `prd.md > Loading & Progress`, `prd.md > Campaign Dashboard`
 
 ### Landing Page (`app/page.tsx`)
-- Animated background (React Bits)
-- App name "Marketeer" prominently displayed
-- Single prompt: "Do you have a logo?" with Yes/No buttons
-- Yes → `/onboarding/upload-logo`
-- No → `/onboarding/location`
+- Split layout: DomeGallery (WebGL dome of storefront photos, desktop only) on left ~70%, branding + CTA on right ~30%
+- LiquidEther animated fluid background behind CTA panel (purple/pink tones)
+- App name "Marketeer" in Dirtyline display font with animated gradient
+- Subtitle: "Marketing campaigns for small businesses"
+- Rotating business type ticker (restaurants, coffee shops, boutiques, barbershops, bakeries, etc.)
+- CTA: "Big-agency marketing without the big-agency budget."
+- Two CTA buttons: "I have a logo" (primary, white) / "Make me one" (secondary, outline)
+- Both buttons → `/onboarding` (stores `hasLogo` flag in sessionStorage)
+- "View past campaigns" link → `/history`
+- Hackathon partner logo carousel at bottom (LogoLoop component: Glitch Club, Gemini, UCLA)
 
-### Onboarding Flow (`app/onboarding/`)
-Each screen is a separate page with Framer Motion transitions between them.
+### Onboarding Flow (`app/onboarding/page.tsx`)
+Single page with a 4-step puzzle UI. Each step is a section component rendered inside a PuzzleBlock. Completed steps collapse into clickable chips; the active step is shown full-size. Uses Framer Motion LayoutGroup + AnimatePresence for smooth layout transitions. Progress dots at the top show current position.
 
-#### Upload Logo (`upload-logo/page.tsx`)
-- Drag-and-drop or click-to-upload for user's logo
-- Preview of uploaded image
-- "Next" button → `/onboarding/competitors`
+**Steps (in order):**
+1. **Logo** (LogoSection) — Drag-and-drop upload via FileUpload component. Preview of uploaded image. "Continue" button advances to next step.
+2. **Rivals** (CompetitorSection) — Multi-file upload for competitor logos/marketing material. Gallery preview of all uploads.
+3. **Location** (LocationSection) — Text input for business city/region.
+4. **Industry** (IndustrySection) — Grid of 10 selectable categories: Restaurant / Food & Drink, Retail / Shopping, Tech / Software, Health & Wellness, Education, Real Estate, Political Campaign, Entertainment / Events, Professional Services, Other (with text input).
 
-#### Competitors (`competitors/page.tsx`)
-- Upload one or more competitor logos/marketing materials
-- Gallery preview of uploaded images
-- "Next" button → `/onboarding/location`
+**Step 5 — Review grid:** After all 4 steps, a 2×2 card grid displays all inputs. Clicking any card re-opens that step for editing. "Generate Campaign" button saves data to sessionStorage and navigates to `/rating`.
 
-#### Location (`location/page.tsx`)
-- Text input for business city/region
-- "Next" button → `/onboarding/industry`
+**State management:** Uses `useReducer` with a step state machine (steps 0–4). Data is held in component state during onboarding, then written to sessionStorage on submit.
 
-#### Industry (`industry/page.tsx`)
-- Grid of selectable industry categories:
-  - Restaurant / Food & Drink
-  - Retail / Shopping
-  - Tech / Software
-  - Health & Wellness
-  - Education
-  - Real Estate
-  - Political Campaign
-  - Entertainment / Events
-  - Professional Services
-  - Other (with text input)
-- "Next" button → `/rating`
+**Unused pages:** `app/onboarding/brand-name/page.tsx` and `app/onboarding/describe/page.tsx` exist but are not part of the active flow.
 
 ### Logo Rating (`app/rating/page.tsx`)
 Implements `prd.md > Logo Rating & Improvement`
@@ -136,42 +127,56 @@ Implements `prd.md > Logo Rating & Improvement`
 - For Path B (no logo): generates a logo first via `/api/generate-logo`, then shows the same rating screen
 
 ### Campaign Proposal (`app/proposal/page.tsx`)
-Implements `prd.md > Campaign Proposal`
+Implements `prd.md > Campaign Proposal` + `prd.md > Asset Generation` + `prd.md > Loading & Progress`
 
-- Single-page creative brief layout:
+- Fetches a creative brief from `/api/generate-proposal` on load
+- Single-page layout showing:
   - **Tagline** — large, prominent text
-  - **Color palette** — rendered swatches from Style Lock
   - **Banner concept** — descriptive sentence
   - **Jingle mood** — genre and energy description
   - **Video scene** — camera angle, setting, action description
   - **Voiceover script** — the actual words to be spoken
-- "Looks good, generate it all" button → `/generating`
-- "Revise" button → sends feedback to `/api/generate-proposal` with change requests
-
-### Generation Progress (`app/generating/page.tsx`)
-Implements `prd.md > Loading & Progress`
-
-- Sequential progress display with named steps:
+- "Revise" button → re-calls `/api/generate-proposal` with change requests
+- "Looks good, generate it all" button → triggers **inline generation** with 5-step progress tracker:
   1. "Crafting your banners..." (Nano Banana ×3)
   2. "Composing your jingle..." (Lyria)
   3. "Filming your ad..." (Veo — with polling)
   4. "Recording your voiceover..." (TTS)
   5. "Putting it all together..." (FFmpeg WASM merge)
-- Each step shows a checkmark when complete
-- Animated transitions between steps
-- Auto-navigates to `/dashboard` when all steps complete
+- Generation progress is persisted to sessionStorage so partial results survive refresh
+- Saves completed campaign to IndexedDB via `lib/store.ts`, then navigates to `/dashboard`
+
+### Generation Progress (`app/generating/page.tsx`)
+**Note: This page exists but is orphaned — no other page routes to it.** Generation is handled inline on the Proposal page (see above).
+
+- Staged timed animations showing banners → video → jingle with accent color transitions
+- Auto-navigates to `/dashboard` when animation sequence completes
 
 ### Campaign Dashboard (`app/dashboard/page.tsx`)
 Implements `prd.md > Campaign Dashboard`
 
+- Loads campaign from IndexedDB (by `?id=` query param or latest campaign)
 - Logo displayed at top
 - Banner gallery — all 3 formats in a responsive grid, click to expand
 - Audio player for jingle with play/pause controls
-- Video player for the final ad (video + voiceover merged)
+- Video player for the final ad (video + voiceover merged via FFmpeg WASM)
 - Tagline and voiceover script displayed as text
 - Each asset has a "Regenerate" button
 - "Download All" button — bundles everything into a zip (JSZip)
 - Individual download buttons per asset
+- Links back to landing page and campaign history
+
+### Campaign History (`app/history/page.tsx`)
+- Lists all saved campaigns from IndexedDB
+- Shows banner preview (1:1 square), industry, location, and creation date for each
+- Click a campaign to open it in the dashboard
+- Delete campaigns with confirmation dialog
+- Accessible from landing page ("View past campaigns") and dashboard
+
+### Dev Helper (`app/dev/page.tsx`)
+- Development-only page to seed sessionStorage with mock campaign data
+- Allows jumping directly to any page in the flow for testing
+- Visit: `http://localhost:3000/dev`
 
 ## API Routes
 
@@ -343,11 +348,10 @@ Implements `prd.md > Asset Generation` (jingle)
 ```
 
 **What it does:**
-- Opens WebSocket to Lyria (`models/lyria-realtime-exp`) using `live.music.connect()`
-- Sets weighted prompts based on mood + brand context
-- Sets `musicGenerationConfig` with appropriate BPM and temperature
-- Collects all PCM audio chunks until stream completes
-- Converts raw PCM to WAV using `wav` library
+- Calls Lyria 3 Clip (`lyria-3-clip`) for original music generation
+- Sets mood-based BPM (upbeat=128, chill=80, dramatic=90, bold=110)
+- Prompt includes brand context, industry, and mood direction
+- Converts raw PCM to WAV with manual header construction (no external `wav` library)
 - Returns WAV audio as base64
 
 **Response:**
@@ -358,7 +362,7 @@ Implements `prd.md > Asset Generation` (jingle)
 }
 ```
 
-**Timeout note:** Lyria generates a ~30s clip. The WebSocket session should complete well within Vercel's 60s serverless limit.
+**Timeout note:** Lyria generates a ~30s clip. Should complete within Vercel's 60s serverless limit.
 
 ### POST `/api/generate-video`
 Implements `prd.md > Asset Generation` (video)
@@ -508,73 +512,112 @@ Each prompt template accepts variables (brand name, industry, colors, etc.) and 
 marketeer/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx                    # Root layout, animated bg, global styles
-│   │   ├── page.tsx                      # Landing: "Do you have a logo?"
+│   │   ├── layout.tsx                    # Root layout, fonts (Geist + Dirtyline), GlobalBackground
+│   │   ├── page.tsx                      # Landing: DomeGallery + "I have a logo" / "Make me one"
+│   │   ├── globals.css                   # Global styles
 │   │   ├── onboarding/
-│   │   │   ├── upload-logo/page.tsx      # Upload user logo
-│   │   │   ├── competitors/page.tsx      # Upload competitor material
-│   │   │   ├── location/page.tsx         # Business location input
-│   │   │   └── industry/page.tsx         # Industry selector grid
+│   │   │   ├── page.tsx                  # 4-step puzzle onboarding (all steps in one page)
+│   │   │   ├── brand-name/page.tsx       # (unused) Brand name input
+│   │   │   └── describe/page.tsx         # (unused) Brand description input
 │   │   ├── rating/
 │   │   │   └── page.tsx                  # Logo rating + improvements
 │   │   ├── proposal/
-│   │   │   └── page.tsx                  # Creative brief review
+│   │   │   └── page.tsx                  # Creative brief review + inline generation
 │   │   ├── generating/
-│   │   │   └── page.tsx                  # Progress/loading states
+│   │   │   └── page.tsx                  # (orphaned) Staged generation animations
 │   │   ├── dashboard/
-│   │   │   └── page.tsx                  # Final campaign dashboard
+│   │   │   └── page.tsx                  # Campaign dashboard + download
+│   │   ├── history/
+│   │   │   └── page.tsx                  # Past campaigns list (IndexedDB)
+│   │   ├── dev/
+│   │   │   └── page.tsx                  # Dev helper for seeding mock data
 │   │   └── api/
 │   │       ├── analyze-logo/route.ts     # Gemini Vision: rate logo
 │   │       ├── generate-logo/route.ts    # Nano Banana: create logo
 │   │       ├── improve-logo/route.ts     # Nano Banana: improve logo
 │   │       ├── generate-proposal/route.ts # LLM: creative brief
 │   │       ├── generate-banners/route.ts  # Nano Banana: 3 formats
-│   │       ├── generate-jingle/route.ts   # Lyria: WebSocket → WAV
+│   │       ├── generate-jingle/route.ts   # Lyria: music generation → WAV
 │   │       ├── generate-video/route.ts    # Veo: start async job
 │   │       ├── check-video/route.ts       # Veo: poll completion
 │   │       └── generate-voiceover/route.ts # TTS: voiceover WAV
 │   ├── components/
-│   │   ├── ui/                           # shadcn/ui primitives
-│   │   ├── AnimatedBackground.tsx        # reactbits.dev background
-│   │   ├── StepWizard.tsx                # Step flow wrapper + transitions
-│   │   ├── FileUpload.tsx                # Drag-drop image upload
+│   │   ├── ui/                           # shadcn/ui primitives (button, card, input)
+│   │   ├── GlobalBackground.tsx          # LiquidEther on all pages except landing + mobile
+│   │   ├── LiquidEther.tsx               # WebGL fluid simulation component
+│   │   ├── StepWizard.tsx                # Layout wrapper with fade-in animation
+│   │   ├── FileUpload.tsx                # Drag-drop image upload (single/multi mode)
 │   │   ├── RatingCard.tsx                # Logo rating display
 │   │   ├── ProposalCard.tsx              # Creative brief sections
 │   │   ├── AssetCard.tsx                 # Dashboard asset card
-│   │   ├── AudioPlayer.tsx               # Jingle playback
-│   │   └── VideoPlayer.tsx               # Video ad playback
+│   │   ├── AudioPlayer.tsx               # Jingle/voiceover playback
+│   │   ├── VideoPlayer.tsx               # Video ad playback
+│   │   ├── hero/
+│   │   │   ├── DomeGallery.tsx           # WebGL dome of storefront photos (Three.js)
+│   │   │   └── DomeGallery.css
+│   │   ├── LogoLoop/
+│   │   │   ├── LogoLoop.tsx              # Horizontal scrolling logo carousel
+│   │   │   └── LogoLoop.css
+│   │   └── onboarding/
+│   │       ├── PuzzleBlock.tsx           # Shared card layout for puzzle grid
+│   │       └── sections/
+│   │           ├── LogoSection.tsx        # Logo upload step
+│   │           ├── CompetitorSection.tsx  # Competitor upload step
+│   │           ├── LocationSection.tsx    # Location input step
+│   │           └── IndustrySection.tsx    # Industry selector step
 │   ├── lib/
 │   │   ├── gemini.ts                     # GenAI SDK client setup
 │   │   ├── style-lock.ts                 # Color extraction from logo
 │   │   ├── prompts.ts                    # All LLM prompt templates
 │   │   ├── ffmpeg.ts                     # WASM video+audio merge
-│   │   └── store.ts                      # IndexedDB campaign state
-│   └── types/
-│       └── campaign.ts                   # TypeScript interfaces
+│   │   ├── store.ts                      # IndexedDB campaign state
+│   │   ├── motion.ts                     # Framer Motion animation variants
+│   │   └── utils.ts                      # cn() helper (clsx + tailwind-merge)
+│   ├── types/
+│   │   └── campaign.ts                   # TypeScript interfaces
+│   └── global.d.ts                       # TypeScript global declarations
 ├── public/
+│   ├── fonts/
+│   │   └── Dirtyline.woff2              # Display font
+│   ├── ffmpeg/
+│   │   ├── ffmpeg-core.js               # FFmpeg WASM core
+│   │   ├── ffmpeg-core.wasm             # FFmpeg WASM binary (~25MB)
+│   │   └── ffmpeg-worker.js             # FFmpeg WASM worker
+│   ├── logos/
+│   │   ├── glitchlogo.png               # Glitch Club logo
+│   │   ├── geminilogo.png               # Gemini logo
+│   │   └── uclalogo.png                 # UCLA logo
+│   ├── marketeer-logo.svg               # App logo (light)
+│   ├── marketeer-logo-dark.svg          # App logo (dark)
+│   ├── marketeer-icon.svg               # App icon
+│   └── marketeer-avatar.svg             # App avatar
 ├── docs/
 │   ├── scope.md
 │   ├── prd.md
-│   └── spec.md
+│   ├── spec.md
+│   └── checklist.md
 ├── process-notes.md
 ├── package.json
-├── tailwind.config.ts
-├── next.config.js
+├── next.config.ts
 ├── tsconfig.json
-└── .env.local                            # GEMINI_API_KEY
+├── postcss.config.mjs
+└── .env                                  # GEMINI_API_KEY
 ```
 
 ## Team Split
 
 ### Person 1: Onboarding + UI Shell
 **Files owned:**
-- `app/layout.tsx`, `app/page.tsx`
-- `app/onboarding/*` (all 4 pages)
-- `components/AnimatedBackground.tsx`
-- `components/StepWizard.tsx`
-- `components/FileUpload.tsx`
-- `tailwind.config.ts`
-- Initial project setup (`package.json`, `next.config.js`)
+- `app/layout.tsx`, `app/page.tsx`, `app/globals.css`
+- `app/onboarding/page.tsx`
+- `app/history/page.tsx`
+- `components/GlobalBackground.tsx`, `components/LiquidEther.tsx`
+- `components/StepWizard.tsx`, `components/FileUpload.tsx`
+- `components/hero/DomeGallery.tsx` + CSS
+- `components/LogoLoop/LogoLoop.tsx` + CSS
+- `components/onboarding/*` (PuzzleBlock + all section components)
+- `lib/motion.ts`, `lib/utils.ts`
+- Initial project setup (`package.json`, `next.config.ts`, `postcss.config.mjs`)
 
 **Worktree:** `claude --worktree onboarding-ui`
 
@@ -627,16 +670,15 @@ marketeer/
 
 The 2-5 minute Devpost demo video should show:
 
-1. **Open Marketeer** — animated landing page (3 seconds)
-2. **"I have a logo" path** — upload a sample logo + competitor logo (15 seconds)
-3. **Enter location + pick industry** (10 seconds)
-4. **Logo rating appears** — show the score, the reasoning, the competitor comparison (20 seconds)
-5. **Apply an improvement** — Nano Banana enhances the logo, score goes up (15 seconds)
-6. **Campaign proposal** — show the creative brief with tagline, palette, scene description (15 seconds)
-7. **Hit "Generate"** — show the progress states stepping through each model (10 seconds)
-8. **Dashboard** — walk through each asset: banners in 3 formats, play the jingle, play the video ad with voiceover (30 seconds)
-9. **Download All** — click the button, show the zip (5 seconds)
-10. **Quick recap** — mention 4 GenMedia models used, the Style Lock feature, and future plans (15 seconds)
+1. **Open Marketeer** — landing page with DomeGallery storefront dome + LiquidEther background (3 seconds)
+2. **"I have a logo" path** — puzzle onboarding: upload logo, upload competitor, enter location, pick industry, review grid (25 seconds)
+3. **Logo rating appears** — show the score, the reasoning, the competitor comparison (20 seconds)
+4. **Apply an improvement** — Nano Banana enhances the logo, score goes up (15 seconds)
+5. **Campaign proposal** — show the creative brief with tagline, scene description, voiceover script (15 seconds)
+6. **Hit "Generate"** — progress tracker steps through each model inline on proposal page (10 seconds)
+7. **Dashboard** — walk through each asset: banners in 3 formats, play the jingle, play the video ad with voiceover (30 seconds)
+8. **Download All** — click the button, show the zip (5 seconds)
+9. **Quick recap** — mention 4 GenMedia models used, the Style Lock feature, and future plans (15 seconds)
 
 Total: ~2.5 minutes. Fast, punchy, shows every feature.
 
@@ -652,9 +694,9 @@ Total: ~2.5 minutes. Fast, punchy, shows every feature.
 **Why:** If the user refreshes mid-generation or wants to come back, their work is saved. Also makes the app feel more like a real product in the demo.
 **Tradeoff:** Slightly more complexity than pure in-memory state.
 
-### 3. Lyria WebSocket buffered in API route
-**Decision:** The `/api/generate-jingle` route opens a WebSocket to Lyria, collects all audio chunks, then returns the complete WAV.
-**Why:** Keeps the frontend simple — it just makes one fetch call and gets audio back. The WebSocket complexity is contained in one API route.
+### 3. Lyria buffered in API route
+**Decision:** The `/api/generate-jingle` route calls Lyria, collects audio, then returns the complete WAV.
+**Why:** Keeps the frontend simple — it just makes one fetch call and gets audio back. The generation complexity is contained in one API route.
 **Tradeoff:** Route stays alive for ~30 seconds while Lyria generates. Must complete within Vercel's 60s timeout.
 
 ### 4. Style Lock via canvas color extraction + Gemini Vision
@@ -685,12 +727,13 @@ Total: ~2.5 minutes. Fast, punchy, shows every feature.
 | Dependency | Purpose | Docs |
 |-----------|---------|------|
 | @google/genai | All GenMedia API calls | [npm](https://www.npmjs.com/package/@google/genai) |
-| @ffmpeg/ffmpeg | Client-side video+audio merge | [npm](https://www.npmjs.com/package/@ffmpeg/ffmpeg) |
+| @ffmpeg/ffmpeg + @ffmpeg/core + @ffmpeg/util | Client-side video+audio merge (WASM) | [npm](https://www.npmjs.com/package/@ffmpeg/ffmpeg) |
 | idb | IndexedDB wrapper | [npm](https://www.npmjs.com/package/idb) |
 | jszip | Bundle assets for download | [npm](https://www.npmjs.com/package/jszip) |
-| framer-motion | Page transitions | [npm](https://www.npmjs.com/package/framer-motion) |
-| reactbits | Animated UI components | [reactbits.dev](https://reactbits.dev) |
-| wav | Convert PCM to WAV in API routes | [npm](https://www.npmjs.com/package/wav) |
+| framer-motion | Layout animations + page transitions | [npm](https://www.npmjs.com/package/framer-motion) |
+| three | WebGL rendering for DomeGallery | [npm](https://www.npmjs.com/package/three) |
+| lucide-react | SVG icon components | [npm](https://www.npmjs.com/package/lucide-react) |
+| @base-ui/react | Base UI primitives | [npm](https://www.npmjs.com/package/@base-ui/react) |
 
 **API key needed:** `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
@@ -698,8 +741,12 @@ Total: ~2.5 minutes. Fast, punchy, shows every feature.
 
 ## Open Issues
 
-1. **Lyria API version stability** — Lyria uses `v1alpha` API version, which is experimental. May change or have unexpected behavior. Fallback plan: if Lyria is unreliable, generate a simple jingle description and link to a royalty-free music tool as a "future feature."
+1. **Lyria API version stability** — Lyria uses an experimental API. May change or have unexpected behavior. Fallback plan: if Lyria is unreliable, generate a simple jingle description and link to a royalty-free music tool as a "future feature."
 
-2. **Veo reference image support** — Veo 3.1 supports up to 3 reference images for style consistency. Need to verify during build whether passing the logo as a reference image actually influences the output meaningfully. If not, rely on text prompt alone for style direction.
+2. **Veo reference image support** — Veo 3.1 supports up to 3 reference images for style consistency. Need to verify whether passing the logo as a reference image actually influences the output meaningfully. If not, rely on text prompt alone for style direction.
 
 3. **Base64 payload sizes** — Generated images and video are passed as base64 strings. A 1K PNG is ~200KB base64, a 720p 8-second MP4 could be several MB. IndexedDB can handle this, but watch for memory pressure if many assets are stored simultaneously.
+
+4. **Orphaned generating page** — `app/generating/page.tsx` is not reachable from any other page. Generation was moved inline to the Proposal page. The generating page could be removed or repurposed.
+
+5. **Unused onboarding pages** — `app/onboarding/brand-name/page.tsx` and `app/onboarding/describe/page.tsx` exist but aren't part of the flow. Could be removed or integrated as future steps.

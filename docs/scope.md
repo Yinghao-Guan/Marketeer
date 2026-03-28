@@ -22,15 +22,16 @@ Design energy: Eye-catching, bold, animated backgrounds (reactbits.dev component
 
 ## What "Done" Looks Like
 A Next.js web app where the user:
-1. Describes their brand/product and names their competitors
-2. Gets a generated logo (Nano Banana) — approves or requests changes
-3. Style Lock kicks in: color palette and visual style extracted from the approved logo
-4. Gets posters/banners generated in the locked style (Nano Banana)
-5. Gets a jingle/audio branding created (Lyria)
-6. Gets a short video ad generated (Veo) with voiceover (TTS)
-7. Downloads all assets as a campaign package
+1. Lands on a visually striking page with "I have a logo" / "Make me one" CTA
+2. Completes a 4-step puzzle onboarding (logo upload, competitor upload, location, industry)
+3. Gets their logo rated by Gemini Vision — can approve or apply AI improvements
+4. Style Lock kicks in: color palette and visual style extracted from the approved logo
+5. Reviews a campaign proposal (tagline, banner concept, jingle mood, video scene, voiceover script) — can revise
+6. Approves to trigger inline generation: banners (Nano Banana ×3), jingle (Lyria), video (Veo), voiceover (TTS), merge (FFmpeg WASM)
+7. Views all assets on a dashboard, regenerates individual assets, downloads as zip
+8. Can revisit past campaigns from the history page
 
-Each step requires user approval before proceeding. The user can optionally upload competitor marketing material (logo, flyer, photo of storefront) and Gemini Vision analyzes it to ensure the generated campaign is visually distinct.
+Each step requires user approval before proceeding. The user uploads competitor marketing material (logo, flyer, photo of storefront) and Gemini Vision analyzes it to ensure the generated campaign is visually distinct.
 
 ## What's Explicitly Cut
 - **Auto-detect local competitors** — too complex for the build. Mentioned as "next steps" in presentation.
@@ -48,8 +49,8 @@ Each step requires user approval before proceeding. The user can optionally uplo
 - Claude Code is the primary coding tool for all team members
 
 ## Loose Implementation Notes
-- **Framework:** Next.js (React frontend + API routes for backend calls)
-- **UI:** Eye-catching design with animated backgrounds from reactbits.dev
+- **Framework:** Next.js 16 (React frontend + API routes for backend calls, Turbopack, React Compiler)
+- **UI:** Eye-catching dark design with LiquidEther fluid backgrounds (WebGL), DomeGallery storefront photo dome (Three.js), Framer Motion animations
 - **GenMedia models used:**
   - Nano Banana (image generation) → logos, posters, banners
   - Lyria (music generation) → jingle / audio branding

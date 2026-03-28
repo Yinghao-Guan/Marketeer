@@ -16,51 +16,39 @@
 
 - [x] **2. Root layout and animated background**
   Spec ref: `spec.md > Frontend Pages > Landing Page` + `spec.md > File Structure > layout.tsx`
-  What to build: Build `src/app/layout.tsx` as the root layout with global styles, fonts, and metadata. Create `src/components/AnimatedBackground.tsx` using a React Bits animated background component (e.g., Hyperspeed, Threads, or similar from reactbits.dev). The background should render behind all pages and look visually striking — this is the first thing judges see in the demo.
-  Acceptance: Every page in the app renders inside the root layout. The animated background is visible, smooth, and doesn't interfere with foreground content. The app has a dark, modern aesthetic that matches the "bold, eye-catching" design energy from scope.md.
-  Verify: Run dev server and confirm the animated background renders on the default page. Navigate between routes (even if they're empty) and confirm the background persists across pages.
+  What was built: `src/app/layout.tsx` as root layout with Geist + Dirtyline fonts, dark mode, and metadata. `src/components/GlobalBackground.tsx` renders a `LiquidEther` WebGL fluid simulation on all pages except the landing page and mobile (saves GPU). Landing page has its own LiquidEther instance + a `DomeGallery` (Three.js dome of storefront photos). Background is a purple/pink animated fluid behind all foreground content.
+  Acceptance: Every page renders inside the root layout. The LiquidEther background is visible and smooth. The dark `#0a0a0a` aesthetic matches the bold design energy.
+  Verify: Run dev server and confirm the fluid background renders. Navigate between routes and confirm it persists (except on landing page which has its own).
 
 - [x] **3. Landing page — "Do you have a logo?"**
   Spec ref: `spec.md > Frontend Pages > Landing Page`
-  What to build: Build `src/app/page.tsx` with the app name "Marketeer" displayed prominently and a single prompt: "Do you have a logo?" with Yes and No buttons. Use shadcn/ui Button components styled to stand out against the animated background. Yes navigates to `/onboarding/upload-logo`. No navigates to `/onboarding/location` (skipping the logo upload step).
-  Acceptance: Landing page shows "Marketeer" title and "Do you have a logo?" prompt. Yes button routes to `/onboarding/upload-logo`. No button routes to `/onboarding/location`. The page looks polished against the animated background.
-  Verify: Run dev server, open `localhost:3000`. Confirm the title and buttons render. Click Yes — confirm URL changes to `/onboarding/upload-logo`. Go back. Click No — confirm URL changes to `/onboarding/location`.
+  What was built: `src/app/page.tsx` with split layout — DomeGallery (WebGL dome of storefront Unsplash photos, desktop only) on left ~70%, branding + CTA on right ~30%. "Marketeer" title in Dirtyline font with animated gradient. Subtitle, rotating business type ticker, and two CTA buttons: "I have a logo" (white, primary) and "Make me one" (outline, secondary). Both buttons go to `/onboarding` and store `hasLogo` in sessionStorage. "View past campaigns" link to `/history`. LogoLoop carousel at bottom showing hackathon partner logos (Glitch Club, Gemini, UCLA).
+  Acceptance: Landing page shows "Marketeer" title, rotating business types, and both buttons. Both buttons route to `/onboarding`. DomeGallery renders on desktop.
+  Verify: Run dev server, open `localhost:3000`. Confirm title, buttons, and DomeGallery render. Click "I have a logo" — confirm URL changes to `/onboarding`. Go back. Click "Make me one" — same destination.
 
 - [x] **4. FileUpload component**
   Spec ref: `spec.md > File Structure > components/FileUpload.tsx`
-  What to build: Create `src/components/FileUpload.tsx` — a reusable drag-and-drop image upload component. It should accept image files (PNG, JPG, WebP), show a visual drop zone, display a preview of the uploaded image(s), and expose the image data as base64 strings via a callback prop. Support both single-file mode (for logo upload) and multi-file mode (for competitor uploads).
-  Acceptance: Component renders a drop zone. Dragging an image onto it shows a preview. Clicking the zone opens a file picker. In single-file mode, uploading replaces the previous image. In multi-file mode, images accumulate in a gallery. Base64 data is accessible via the callback.
-  Verify: Temporarily render the FileUpload component on any page. Upload an image via drag-and-drop and via click. Confirm the preview displays. Test both single and multi-file modes.
+  What was built: `src/components/FileUpload.tsx` — reusable drag-and-drop image upload component. Accepts image files, shows a visual drop zone with customizable label, displays preview thumbnails, and exposes image data as base64 data URLs via `onFilesChange` callback. Used by LogoSection (single file) and CompetitorSection (multi-file).
+  Acceptance: Component renders a drop zone. Dragging an image shows a preview. Clicking opens file picker. Base64 data URLs are passed to parent via callback.
+  Verify: Upload an image via drag-and-drop and via click on the onboarding page. Confirm previews display.
 
-- [x] **5. Upload Logo page**
-  Spec ref: `spec.md > Frontend Pages > Onboarding Flow > Upload Logo`
-  What to build: Build `src/app/onboarding/upload-logo/page.tsx`. Uses the FileUpload component in single-file mode for the user's logo. Shows a preview of the uploaded image. Has a "Next" button that navigates to `/onboarding/competitors`. Store the uploaded logo data in component state (IndexedDB integration is Person 4's job — just hold it in state or context for now).
-  Acceptance: Page shows a file upload area for the logo. Uploading an image shows a preview. "Next" button appears and navigates to `/onboarding/competitors`.
-  Verify: Run dev server, navigate to `/onboarding/upload-logo`. Upload an image. Confirm preview shows. Click "Next" — confirm URL changes to `/onboarding/competitors`.
+- [x] **5–8. Onboarding steps (consolidated into single puzzle page)**
+  Spec ref: `spec.md > Frontend Pages > Onboarding Flow`
+  What was built: Instead of 4 separate pages, all onboarding steps were consolidated into `src/app/onboarding/page.tsx` — a single-page puzzle UI. Each step is a section component (`LogoSection`, `CompetitorSection`, `LocationSection`, `IndustrySection`) rendered inside a `PuzzleBlock`. Steps use `useReducer` with a state machine (steps 0–4). Completed steps collapse into clickable chips using Framer Motion LayoutGroup. Step 4 shows a 2×2 review grid where users can click any card to re-edit. "Generate Campaign" button writes all data to sessionStorage and navigates to `/rating`.
+  - **Step 0 — Logo**: `LogoSection` uses FileUpload in single-file mode. "Continue" advances.
+  - **Step 1 — Rivals**: `CompetitorSection` uses FileUpload in multi-file mode. Gallery preview.
+  - **Step 2 — Location**: `LocationSection` has a text input for city/region.
+  - **Step 3 — Industry**: `IndustrySection` displays 10 selectable categories with "Other" text input.
+  - **Step 4 — Review**: 2×2 card grid showing all inputs. Cards are clickable to re-edit.
+  Acceptance: All 4 input steps work in sequence. Completed steps show as chips. Review grid displays all data. "Generate Campaign" navigates to `/rating`.
+  Verify: Run dev server, navigate to `/onboarding`. Complete all 4 steps. Confirm puzzle transitions animate smoothly. Click a card in review grid — confirm it re-opens that step. Click "Generate Campaign" — confirm URL changes to `/rating`.
+  Note: `app/onboarding/brand-name/page.tsx` and `app/onboarding/describe/page.tsx` also exist but are unused in the active flow.
 
-- [x] **6. Competitors page**
-  Spec ref: `spec.md > Frontend Pages > Onboarding Flow > Competitors`
-  What to build: Build `src/app/onboarding/competitors/page.tsx`. Uses the FileUpload component in multi-file mode. Shows a gallery preview of all uploaded competitor images. Has a "Next" button that navigates to `/onboarding/location`.
-  Acceptance: Page allows uploading one or more competitor images. Each upload appears in a gallery preview. "Next" button navigates to `/onboarding/location`.
-  Verify: Run dev server, navigate to `/onboarding/competitors`. Upload 2-3 images. Confirm they all appear in the gallery. Click "Next" — confirm URL changes to `/onboarding/location`.
-
-- [x] **7. Location page**
-  Spec ref: `spec.md > Frontend Pages > Onboarding Flow > Location`
-  What to build: Build `src/app/onboarding/location/page.tsx`. Simple page with a text input for the user's business city/region. Use a shadcn/ui Input component. Has a "Next" button that navigates to `/onboarding/industry`.
-  Acceptance: Page shows a text input with a clear label/placeholder like "Where is your business located?". "Next" button navigates to `/onboarding/industry`.
-  Verify: Run dev server, navigate to `/onboarding/location`. Type a city name. Click "Next" — confirm URL changes to `/onboarding/industry`.
-
-- [x] **8. Industry page**
-  Spec ref: `spec.md > Frontend Pages > Onboarding Flow > Industry`
-  What to build: Build `src/app/onboarding/industry/page.tsx`. Display a grid of selectable industry categories: Restaurant / Food & Drink, Retail / Shopping, Tech / Software, Health & Wellness, Education, Real Estate, Political Campaign, Entertainment / Events, Professional Services, Other (with a text input that appears when selected). Use shadcn/ui Card or Button components for each option. Selecting one highlights it. "Next" button navigates to `/rating` (Person 2's page — it can be a blank page for now).
-  Acceptance: Industry grid displays all 10 categories. Clicking one highlights it. Clicking another switches the selection. Selecting "Other" shows a text input. "Next" button navigates to `/rating`.
-  Verify: Run dev server, navigate to `/onboarding/industry`. Click through several categories and confirm only one is selected at a time. Select "Other" — confirm text input appears. Click "Next" — confirm URL changes to `/rating`.
-
-- [x] **9. StepWizard and Framer Motion page transitions**
-  Spec ref: `spec.md > Frontend Pages > Onboarding Flow` ("Each screen is a separate page with Framer Motion transitions between them")
-  What to build: Create `src/components/StepWizard.tsx` — a wrapper component that adds Framer Motion enter/exit animations to page content. Apply it to all onboarding pages and the landing page so navigating between them has smooth slide or fade transitions. This is the polish pass that makes the onboarding flow feel seamless in the demo.
-  Acceptance: Navigating from the landing page through all onboarding steps shows animated transitions (no hard cuts between pages). Animations feel smooth and fast (200-400ms). Going forward and backward both animate cleanly.
-  Verify: Run dev server and click through the entire flow: landing → upload logo → competitors → location → industry. Confirm every page transition is animated. Use the browser back button and confirm reverse transitions also work.
+- [x] **9. StepWizard, animations, and motion system**
+  Spec ref: `spec.md > Frontend Pages > Onboarding Flow`
+  What was built: `src/components/StepWizard.tsx` is a layout wrapper with fade-in animation used on onboarding and proposal pages. `src/lib/motion.ts` contains all shared Framer Motion variants: `fadeBlur` (fade + blur entrance), `staggerContainer`/`staggerChild` (staggered list reveals), `puzzleEnter`/`puzzleSpring` (puzzle block transitions), `titleLetter` (per-letter title animation), and `chipEnter` (chip pill animations). The onboarding puzzle uses LayoutGroup + AnimatePresence for smooth step-to-step transitions — steps don't navigate between pages, they animate within the single onboarding page.
+  Acceptance: All page transitions are animated. Puzzle steps animate smoothly between active/completed/grid states. Landing page elements stagger in on load.
+  Verify: Run dev server and click through the full flow. Confirm puzzle transitions animate. Confirm landing page elements fade/blur in sequentially.
 
 - [ ] **10. Prepare and record Devpost demo video**
   Spec ref: `spec.md > Demo Flow` + `prd.md > What We're Building`
