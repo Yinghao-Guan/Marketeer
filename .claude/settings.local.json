@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Read(//c/Program Files \\(x86\\)/**)",
-      "Read(//c/msys64/ucrt64/bin/**)"
+      "Read(//c/msys64/ucrt64/bin/**)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:discuss.ai.google.dev)"
     ]
   }
 }
