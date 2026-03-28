@@ -35,7 +35,7 @@ function ScoreRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={4}
-            className="text-neutral-800"
+            className="text-white/10"
           />
           <circle
             cx={size / 2}
@@ -56,7 +56,7 @@ function ScoreRing({
         </span>
       </div>
       {label && (
-        <span className="text-xs text-neutral-400 uppercase tracking-wide">
+        <span className="text-xs text-white/50 uppercase tracking-wide">
           {label}
         </span>
       )}
@@ -76,11 +76,11 @@ function FormatRow({
   reasoning: string;
 }) {
   return (
-    <div className="flex items-start gap-4 py-3 border-b border-neutral-800 last:border-0">
+    <div className="flex items-start gap-4 py-3 border-b border-white/10 last:border-0">
       <ScoreRing score={score} size={56} />
       <div className="flex-1 min-w-0">
         <h4 className="text-sm font-semibold text-white">{label}</h4>
-        <p className="text-sm text-neutral-400 mt-0.5">{reasoning}</p>
+        <p className="text-sm text-white/50 mt-0.5">{reasoning}</p>
       </div>
     </div>
   );
@@ -104,7 +104,7 @@ function ImprovementCard({
   };
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+    <div className="glass-card p-4">
       <div className="flex items-center gap-2 mb-2">
         <span
           className={`text-xs font-medium px-2 py-0.5 rounded-full border ${priorityColors[improvement.priority]}`}
@@ -115,14 +115,14 @@ function ImprovementCard({
       <p className="text-sm text-white font-medium">
         {improvement.suggestion}
       </p>
-      <p className="text-xs text-neutral-400 mt-1">
+      <p className="text-xs text-white/50 mt-1">
         {improvement.marketingReason}
       </p>
       <button
         onClick={onApply}
         disabled={applying}
-        className="mt-3 w-full py-2 px-4 rounded-lg bg-white text-black text-sm font-medium
-          hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full py-2 px-4 rounded-full bg-white text-black text-sm font-medium
+          hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {applying ? "Applying..." : "Apply this improvement"}
       </button>
@@ -140,21 +140,21 @@ function CompetitorSection({
   differentiation: string;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4 space-y-3">
+    <div className="glass-card p-4 space-y-3">
       <h3 className="text-sm font-semibold text-white">
         Competitor Analysis
       </h3>
       <div>
-        <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">
+        <p className="text-xs text-white/40 uppercase tracking-wide mb-1">
           Color Overlap
         </p>
-        <p className="text-sm text-neutral-300">{colorOverlap}</p>
+        <p className="text-sm text-white/60">{colorOverlap}</p>
       </div>
       <div>
-        <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">
+        <p className="text-xs text-white/40 uppercase tracking-wide mb-1">
           Differentiation
         </p>
-        <p className="text-sm text-neutral-300">{differentiation}</p>
+        <p className="text-sm text-white/60">{differentiation}</p>
       </div>
     </div>
   );
@@ -176,11 +176,11 @@ export default function RatingCard({
       {/* Overall Score */}
       <div className="flex flex-col items-center py-4">
         <ScoreRing score={rating.overallRating} size={120} />
-        <p className="text-neutral-400 text-sm mt-2">Overall Rating</p>
+        <p className="text-white/50 text-sm mt-2">Overall Rating</p>
       </div>
 
       {/* Per-format Ratings */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+      <div className="glass-card p-4">
         <h3 className="text-sm font-semibold text-white mb-3">
           Format Effectiveness
         </h3>
