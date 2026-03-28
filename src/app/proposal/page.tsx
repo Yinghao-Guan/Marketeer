@@ -39,11 +39,13 @@ interface GenerationProgress {
 }
 
 function loadProgress(): GenerationProgress {
+    if (typeof window === "undefined") return {};
     try { return JSON.parse(sessionStorage.getItem(PROGRESS_KEY) || "{}"); }
     catch { return {}; }
 }
 
 function saveProgress(updates: Partial<GenerationProgress>) {
+    if (typeof window === "undefined") return;
     const current = loadProgress();
     sessionStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...current, ...updates }));
 }
@@ -63,11 +65,13 @@ export default function ProposalPage() {
     const generatingStarted = useRef(false);
 
     const getCampaign = useCallback(() => {
+        if (typeof window === "undefined") return null;
         const data = sessionStorage.getItem("marketeer-campaign");
         return data ? JSON.parse(data) : null;
     }, []);
 
     const saveCampaignToSession = useCallback((updates: Record<string, unknown>) => {
+        if (typeof window === "undefined") return;
         const current = getCampaign() || {};
         sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, ...updates }));
     }, [getCampaign]);
