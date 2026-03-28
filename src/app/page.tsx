@@ -147,7 +147,7 @@ export default function Home() {
           custom={0.2}
           className="text-[13px] font-light tracking-[0.15em] uppercase text-white/40 text-center -mt-2"
         >
-          AI-powered marketing campaigns in minutes
+          Marketing campaigns for small businesses
         </motion.p>
 
         {/* Rotating business type */}
@@ -181,10 +181,24 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           custom={0.4}
-          className="text-base sm:text-lg font-light text-white/70 text-center leading-relaxed"
+          className="text-base sm:text-lg font-light text-white/70 text-center leading-relaxed max-w-xs"
         >
-          Drop your logo. Get a full campaign.
+          Big-agency marketing without the big-agency budget.
         </motion.p>
+
+        {/* Small business badge */}
+        <motion.div
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.45}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03]"
+        >
+          <svg className="w-3.5 h-3.5 text-[#5227FF]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M3 7v1a3 3 0 006 0V7m0 0V7a3 3 0 006 0v0m0 0V7a3 3 0 006 0V7M6 21V10.7M18 21V10.7M3 7h18l-1.5-4.5H4.5L3 7z" />
+          </svg>
+          <span className="text-[11px] tracking-wide uppercase text-white/40">Made for local shops & startups</span>
+        </motion.div>
 
         {/* CTA buttons */}
         <motion.div

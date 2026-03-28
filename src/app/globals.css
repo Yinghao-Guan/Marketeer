@@ -257,4 +257,8 @@
     grid-template-rows: minmax(120px, 1fr) minmax(120px, 1fr);
     grid-template-areas: "logo location" "competitor industry";
   }
+  .puzzle-grid-logo { grid-area: logo; }
+  .puzzle-grid-location { grid-area: location; }
+  .puzzle-grid-competitor { grid-area: competitor; }
+  .puzzle-grid-industry { grid-area: industry; }
 }

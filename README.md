@@ -1,6 +1,6 @@
 # Marketeer
 
-an AI-powered marketing campaign generator. upload or generate a logo, get it analyzed, then receive a full campaign with banners, jingles, video ads, and voiceovers.
+an AI-powered marketing campaign generator built for small businesses. local shops, startups, and solo founders can upload or generate a logo, get it analyzed, then receive a full campaign with banners, jingles, video ads, and voiceovers — no agency, no design skills needed.
 
 ## how it works
 

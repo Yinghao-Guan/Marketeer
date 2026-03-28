@@ -133,7 +133,7 @@ export default function OnboardingPage() {
                 <PuzzleBlock
                   layoutId="logo"
                   mode="grid"
-                  style={{ gridArea: "logo" }}
+                  className="puzzle-grid-logo"
                   onClick={() => dispatch({ type: "EDIT_STEP", step: 0 })}
                 >
                   <LogoSection
@@ -146,7 +146,7 @@ export default function OnboardingPage() {
                 <PuzzleBlock
                   layoutId="location"
                   mode="grid"
-                  style={{ gridArea: "location" }}
+                  className="puzzle-grid-location"
                   onClick={() => dispatch({ type: "EDIT_STEP", step: 2 })}
                 >
                   <LocationSection
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
                 <PuzzleBlock
                   layoutId="competitor"
                   mode="grid"
-                  style={{ gridArea: "competitor" }}
+                  className="puzzle-grid-competitor"
                   onClick={() => dispatch({ type: "EDIT_STEP", step: 1 })}
                 >
                   <CompetitorSection
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
                 <PuzzleBlock
                   layoutId="industry"
                   mode="grid"
-                  style={{ gridArea: "industry" }}
+                  className="puzzle-grid-industry"
                   onClick={() => dispatch({ type: "EDIT_STEP", step: 3 })}
                 >
                   <IndustrySection
