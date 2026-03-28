@@ -100,12 +100,18 @@ export default function OnboardingPage() {
       industry: state.industry,
     };
 
+    // Store only small fields in sessionStorage (images are too large)
     sessionStorage.setItem(
       "marketeer-campaign",
-      JSON.stringify({ ...campaignData, id })
+      JSON.stringify({
+        id,
+        hasLogo: campaignData.hasLogo,
+        location: campaignData.location,
+        industry: campaignData.industry,
+      })
     );
 
-    // Persist to IndexedDB so it shows in history
+    // Full data goes to IndexedDB
     await saveCampaign({
       id,
       createdAt: new Date(),

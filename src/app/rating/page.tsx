@@ -41,10 +41,14 @@ function RatingContent() {
   const saveCampaignData = useCallback(
     (updates: Record<string, unknown>) => {
       const current = getCampaignData() || {};
-      sessionStorage.setItem(
-        "marketeer-campaign",
-        JSON.stringify({ ...current, ...updates })
-      );
+      try {
+        sessionStorage.setItem(
+          "marketeer-campaign",
+          JSON.stringify({ ...current, ...updates })
+        );
+      } catch {
+        // quota exceeded - sessionStorage is a convenience cache, IndexedDB is the source of truth
+      }
     },
     [getCampaignData]
   );
@@ -54,25 +58,13 @@ function RatingContent() {
     async function init() {
     let campaign = getCampaignData();
 
-    // Hydrate from IndexedDB when resuming from history
-    if (!campaign) {
-      const resumeId = searchParams.get("id");
-      if (resumeId) {
-        const saved = await getCampaign(resumeId);
-        if (saved) {
-          const sessionData = {
-            id: saved.id,
-            hasLogo: saved.hasLogo,
-            userLogo: saved.userLogo,
-            competitorLogos: saved.competitorLogos,
-            location: saved.location,
-            industry: saved.industry,
-            ...(saved.logoRating ? { logoRating: saved.logoRating } : {}),
-            ...(saved.approvedLogo ? { approvedLogo: saved.approvedLogo } : {}),
-          };
-          sessionStorage.setItem("marketeer-campaign", JSON.stringify(sessionData));
-          campaign = sessionData;
-        }
+    // Load full data from IndexedDB (sessionStorage may only have the ID)
+    const campaignId = campaign?.id || searchParams.get("id");
+    if (campaignId) {
+      const saved = await getCampaign(campaignId);
+      if (saved) {
+        // Merge: sessionStorage overrides for transient state, IndexedDB has images
+        campaign = { ...saved, ...campaign, id: campaignId };
       }
     }
 

@@ -77,7 +77,11 @@ function ProposalContent() {
     const saveCampaignToSession = useCallback((updates: Record<string, unknown>) => {
         if (typeof window === "undefined") return;
         const current = getCampaign() || {};
-        sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, ...updates }));
+        try {
+            sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, ...updates }));
+        } catch {
+            // quota exceeded - IndexedDB is the source of truth
+        }
     }, [getCampaign]);
 
     const generateProposal = useCallback(async (feedback?: string) => {
@@ -114,26 +118,17 @@ function ProposalContent() {
 
     useEffect(() => {
         async function init() {
-            // Hydrate from IndexedDB when resuming from history
-            if (!getCampaign()) {
-                const resumeId = searchParams.get("id");
-                if (resumeId) {
-                    const saved = await getCampaignFromDB(resumeId);
-                    if (saved) {
-                        const sessionData: Record<string, unknown> = {
-                            id: saved.id,
-                            hasLogo: saved.hasLogo,
-                            userLogo: saved.userLogo,
-                            competitorLogos: saved.competitorLogos,
-                            location: saved.location,
-                            industry: saved.industry,
-                            brandName: saved.brandName,
-                        };
-                        if (saved.approvedLogo) sessionData.approvedLogo = saved.approvedLogo;
-                        if (saved.logoRating) sessionData.logoRating = saved.logoRating;
-                        if (saved.styleLock) sessionData.styleLock = saved.styleLock;
-                        if (saved.proposal) sessionData.proposal = saved.proposal;
-                        sessionStorage.setItem("marketeer-campaign", JSON.stringify(sessionData));
+            // Load full data from IndexedDB (sessionStorage may only have the ID)
+            const session = getCampaign();
+            const campaignId = session?.id || searchParams.get("id");
+            if (campaignId) {
+                const saved = await getCampaignFromDB(campaignId);
+                if (saved) {
+                    const merged = { ...saved, ...session, id: campaignId };
+                    try {
+                        sessionStorage.setItem("marketeer-campaign", JSON.stringify(merged));
+                    } catch {
+                        // quota exceeded - that's fine, generateProposal reads from getCampaign()
                     }
                 }
             }
