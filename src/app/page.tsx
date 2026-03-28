@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
+import { LogoLoop } from "@/components/LogoLoop/LogoLoop";
+
+const HACKATHON_LOGOS = [
+  { src: "/logos/glitchlogo.png", alt: "Glitch Club" },
+  { src: "/logos/geminilogo.png", alt: "Gemini" },
+  { src: "/logos/uclalogo.png", alt: "UCLA" },
+];
 
 const DomeGallery = dynamic(() => import("@/components/hero/DomeGallery"), {
   ssr: false,
@@ -127,7 +134,12 @@ export default function Home() {
             autoRampDuration={0.8}
           />
         </div>
-        <div className="relative z-10 flex flex-col items-center justify-center h-full px-12 gap-5">
+        <div className="relative z-10 flex flex-col items-center h-full px-12">
+        {/* Spacer to push content to center */}
+        <div className="flex-1" />
+
+        {/* Main content */}
+        <div className="flex flex-col items-center gap-5">
         {/* Title */}
         <motion.h1
           variants={fadeBlur}
@@ -245,6 +257,34 @@ export default function Home() {
               </svg>
             </span>
           </button>
+        </motion.div>
+        </div>
+
+        {/* Spacer to push logos to bottom */}
+        <div className="flex-1" />
+
+        {/* Built for hackathon strip */}
+        <motion.div
+          variants={fadeBlur}
+          initial="hidden"
+          animate="visible"
+          custom={0.7}
+          className="w-full pb-8"
+        >
+          <p className="text-[13px] tracking-[0.15em] uppercase font-light text-white/50 text-center mb-4">
+            Built for
+          </p>
+          <LogoLoop
+            logos={HACKATHON_LOGOS}
+            speed={40}
+            direction="left"
+            logoHeight={64}
+            gap={48}
+            pauseOnHover
+            fadeOut
+            fadeOutColor="#0a0a0a"
+            ariaLabel="Hackathon partner logos"
+          />
         </motion.div>
         </div>
       </div>
