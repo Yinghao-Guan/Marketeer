@@ -19,25 +19,9 @@ an AI-powered marketing campaign generator built for small businesses. local sho
 - FFmpeg WASM for client-side video/audio merging
 - IndexedDB for campaign persistence
 
-## setup
+## live site
 
-```bash
-npm install
-```
-
-create a `.env.local` file:
-
-```
-GEMINI_API_KEY=your_key_here
-```
-
-run the dev server:
-
-```bash
-npm run dev
-```
-
-then open `http://localhost:3000`.
+https://marketeer-eight.vercel.app/
 
 ## generated assets
 

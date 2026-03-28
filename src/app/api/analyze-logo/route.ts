@@ -86,7 +86,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const text = response.text || "{}";
+    let text = response.text || "{}";
+    // Strip markdown code fences if present
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+    // Fix invalid escape sequences that Gemini sometimes produces
+    text = text.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
     const rating: LogoRating = JSON.parse(text);
 
     return NextResponse.json(rating);
