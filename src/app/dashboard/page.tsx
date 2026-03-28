@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import JSZip from "jszip";
 import AssetCard from "@/components/AssetCard";
@@ -13,7 +14,7 @@ import {
   Campaign,
   Banner,
 } from "@/lib/store";
-import { mergeVideoAudio } from "@/lib/ffmpeg";
+import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 import { staggerContainer, staggerChild } from "@/lib/motion";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,9 +28,29 @@ type RegeneratingState = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Strip the `data:<mime>;base64,` prefix if present, returning raw base64. */
+function extractBase64(src: string): string {
+  return src.startsWith("data:") ? src.split(",")[1] : src;
+}
+
 function base64ToObjectUrl(base64: string, mimeType: string): string {
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const raw = extractBase64(base64);
+  const bytes = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
   return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+}
+
+function inferAudioType(base64: string): { mime: string; ext: string } {
+  // Data URL — MIME type is explicit
+  if (base64.startsWith("data:")) {
+    const mime = base64.slice(5, base64.indexOf(";"));
+    const ext = mime === "audio/wav" || mime === "audio/wave" ? "wav" : "mp3";
+    return { mime, ext };
+  }
+  if (base64.startsWith("UklGR")) return { mime: "audio/wav", ext: "wav" };
+  if (base64.startsWith("SUQz") || base64.startsWith("//uQ")) {
+    return { mime: "audio/mpeg", ext: "mp3" };
+  }
+  return { mime: "audio/mpeg", ext: "mp3" };
 }
 
 function triggerDownload(base64: string, mimeType: string, filename: string) {
@@ -64,13 +85,67 @@ export default function DashboardPage() {
 
   // ── Load campaign from IndexedDB on mount ──
   useEffect(() => {
-    initDB()
-      .then(getLatestCampaign)
-      .then((c) => {
-        setCampaign(c ?? null);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+
+    const loadCampaign = async () => {
+      try {
+        await initDB();
+        const latestCampaign = await getLatestCampaign();
+
+        if (!latestCampaign) {
+          if (!cancelled) {
+            setCampaign(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        let resolvedCampaign = latestCampaign;
+        const needsFinalVideoRepair =
+          latestCampaign.currentStep === "dashboard" &&
+          !!latestCampaign.video &&
+          !!latestCampaign.voiceover &&
+          latestCampaign.finalVideoVersion !== FINAL_VIDEO_VERSION;
+
+        if (needsFinalVideoRepair) {
+          try {
+            const repairedFinalVideo = await mergeVideoAudio(
+              latestCampaign.video,
+              latestCampaign.voiceover
+            );
+            const repair = {
+              finalVideo: repairedFinalVideo,
+              finalVideoVersion: FINAL_VIDEO_VERSION,
+            };
+            await updateCampaign(latestCampaign.id, repair);
+            resolvedCampaign = { ...latestCampaign, ...repair };
+          } catch (error) {
+            console.error("Final video repair failed:", error);
+            const fallback = {
+              finalVideo: latestCampaign.video,
+              finalVideoVersion: FINAL_VIDEO_VERSION,
+            };
+            await updateCampaign(latestCampaign.id, fallback);
+            resolvedCampaign = { ...latestCampaign, ...fallback };
+          }
+        }
+
+        if (!cancelled) {
+          setCampaign(resolvedCampaign);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCampaign();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Cleanup video polling on unmount ──
@@ -123,7 +198,8 @@ export default function DashboardPage() {
         }),
       });
       const data = await res.json();
-      const jingle: string = data.audioBase64;
+      const mime: string = data.mimeType || "audio/mpeg";
+      const jingle = `data:${mime};base64,${data.audioBase64}`;
       await updateCampaign(campaign.id, { jingle });
       setCampaign((c) => c && { ...c, jingle });
     } catch (e) {
@@ -177,8 +253,17 @@ export default function DashboardPage() {
 
       // Step 3: merge with existing voiceover
       const finalVideo = await mergeVideoAudio(videoBase64, campaign.voiceover);
-      await updateCampaign(campaign.id, { video: videoBase64, finalVideo });
-      setCampaign((c) => c && { ...c, video: videoBase64, finalVideo });
+      await updateCampaign(campaign.id, {
+        video: videoBase64,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
+      setCampaign((c) => c && {
+        ...c,
+        video: videoBase64,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
     } catch (e) {
       console.error("Video regeneration failed:", e);
     } finally {
@@ -203,8 +288,17 @@ export default function DashboardPage() {
 
       // Re-merge with existing raw video
       const finalVideo = await mergeVideoAudio(campaign.video, voiceover);
-      await updateCampaign(campaign.id, { voiceover, finalVideo });
-      setCampaign((c) => c && { ...c, voiceover, finalVideo });
+      await updateCampaign(campaign.id, {
+        voiceover,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
+      setCampaign((c) => c && {
+        ...c,
+        voiceover,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
     } catch (e) {
       console.error("Voiceover regeneration failed:", e);
     } finally {
@@ -232,7 +326,10 @@ export default function DashboardPage() {
         if (b64) zip.file(bannerNames[fmt], b64, { base64: true });
       }
 
-      if (campaign.jingle) zip.file("jingle.wav", campaign.jingle, { base64: true });
+      if (campaign.jingle) {
+        const { ext } = inferAudioType(campaign.jingle);
+        zip.file(`jingle.${ext}`, extractBase64(campaign.jingle), { base64: true });
+      }
       if (campaign.finalVideo) zip.file("video-ad.mp4", campaign.finalVideo, { base64: true });
 
       const brief = [
@@ -275,12 +372,12 @@ export default function DashboardPage() {
         <p className="text-white/50 max-w-sm">
           Complete the setup flow to generate your campaign assets.
         </p>
-        <a
+        <Link
           href="/"
           className="mt-2 px-6 py-2 rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] text-white text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
         >
           Get started
-        </a>
+        </Link>
       </div>
     );
   }
