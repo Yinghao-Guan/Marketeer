@@ -5,9 +5,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function POST(req: Request) {
     try {
-        const { videoScene, styleLock, logoBase64, aspectRatio = "16:9", location } = await req.json();
+        const { videoScene, styleLock, logoBase64, aspectRatio = "16:9", location, description } = await req.json();
 
-        const promptText = VIDEO_SCENE_PROMPT(videoScene, styleLock.colors, styleLock.style, location || "");
+        const promptText = VIDEO_SCENE_PROMPT(videoScene, styleLock.colors, styleLock.style, location || "", description || "");
         console.log("[generate-video] starting", {
             model: "veo-3.1-generate-preview",
             promptLength: promptText.length,

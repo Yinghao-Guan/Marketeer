@@ -10,7 +10,7 @@ const MOOD_BPM: Record<string, number> = {
 
 export async function POST(req: Request) {
     try {
-        const { mood, jingleMood, brandName, industry, tagline, location } = await req.json();
+        const { mood, jingleMood, brandName, industry, tagline, location, description } = await req.json();
 
         const bpm = MOOD_BPM[mood] ?? 100;
         const promptText = `${JINGLE_PROMPT(
@@ -18,7 +18,8 @@ export async function POST(req: Request) {
             tagline,
             jingleMood,
             industry,
-            location || ""
+            location || "",
+            description || ""
         )}
 
 Target tempo: ${bpm} BPM.

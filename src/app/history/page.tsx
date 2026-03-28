@@ -8,6 +8,7 @@ import {
   initDB,
   getAllCampaigns,
   deleteCampaign,
+  saveCampaign,
   Campaign,
 } from "@/lib/store";
 import { ArrowLeft } from "lucide-react";
@@ -68,6 +69,40 @@ export default function HistoryPage() {
     await deleteCampaign(id);
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
     setDeleteConfirmId(null);
+  }
+
+  async function handleRegenerate(original: Campaign) {
+    const newId = crypto.randomUUID();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clone: any = { ...original };
+
+    // Reset generated assets -- these will be regenerated
+    delete clone.proposal;
+    delete clone.banners;
+    delete clone.jingle;
+    delete clone.video;
+    delete clone.voiceover;
+    delete clone.finalVideo;
+    delete clone.finalVideoVersion;
+    delete clone.jingleMood;
+
+    const newCampaign: Campaign = {
+      ...clone,
+      id: newId,
+      createdAt: new Date(),
+      currentStep: "proposal",
+    };
+
+    await saveCampaign(newCampaign);
+
+    // Write to sessionStorage so the proposal page can find it
+    try {
+      sessionStorage.setItem("marketeer-campaign", JSON.stringify(newCampaign));
+    } catch {
+      // quota exceeded -- IndexedDB is the source of truth
+    }
+
+    router.push(`/proposal?id=${newId}`);
   }
 
   // ── Loading ──
@@ -234,6 +269,30 @@ export default function HistoryPage() {
                         <span className="flex-shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">
                           in progress
                         </span>
+                      )}
+
+                      {/* Regenerate button -- finished campaigns only */}
+                      {c.currentStep === "dashboard" && (
+                        <button
+                          onClick={() => handleRegenerate(c)}
+                          aria-label="Regenerate campaign"
+                          title="regenerate as new campaign"
+                          className="text-white/20 hover:text-white/50 transition-colors p-1"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M20.015 4.356v4.992"
+                            />
+                          </svg>
+                        </button>
                       )}
 
                       {/* Delete button */}

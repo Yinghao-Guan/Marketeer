@@ -6,11 +6,13 @@ export const GENERATE_PROPOSAL_PROMPT = (
     style: string,
     competitorAnalysis: string,
     logoDescription: string,
+    description: string,
     revisionFeedback?: string
 ) => `
 Act as a world-class creative director. Create a marketing campaign brief for:
 
 Brand Name: ${brandName}
+Business Description: ${description}
 Industry: ${industry}
 Location: ${location}
 Visual Style: ${style}
@@ -18,6 +20,8 @@ Color Palette: ${colors.join(', ')}
 Logo Description: ${logoDescription}
 Competitor Analysis: ${competitorAnalysis}
 ${revisionFeedback ? `Revision Feedback: ${revisionFeedback}` : ''}
+
+CRITICAL: The business is described as "${description}". All campaign content MUST reflect what this business actually does. Do not guess or infer a different type of business.
 
 IMPORTANT — Location matters. The business is in ${location}. Incorporate this into every asset:
 - bannerConcept: Reference the local environment, architecture, or cultural elements of ${location} in the visual composition.
@@ -41,13 +45,15 @@ export const BANNER_PROMPT = (
     bannerConcept: string,
     colors: string[],
     style: string,
-    location: string
+    location: string,
+    description: string
 ) => `
 Professional marketing banner for "${brandName}", a business located in ${location}.
+Business: ${description}
 Concept: ${bannerConcept}
 Style: ${style}
 Colors: Use ${colors.join(', ')} prominently.
-The visual should feel authentic to ${location} — incorporate local environment, architecture, or cultural elements where appropriate.
+The visual should feel authentic to ${location} and clearly represent a business that ${description}.
 High-quality commercial photography style, clean composition, optimized for social media.
 `;
 
@@ -55,12 +61,13 @@ export const VIDEO_SCENE_PROMPT = (
     videoScene: string,
     colors: string[],
     style: string,
-    location: string
+    location: string,
+    description: string
 ) => `
-Cinematic video shot of a product or environment set in ${location} (no people, no faces): ${videoScene}.
+Cinematic video shot of a product or environment set in ${location} for a business that ${description} (no people, no faces): ${videoScene}.
 Visual Style: ${style}.
 Color Grade: Emphasize ${colors.join(', ')}.
-The setting should reflect ${location} — use authentic local architecture, landscapes, or environments.
+The setting should reflect ${location} and the business's identity.
 Technical: 4K textures, smooth camera movement, professional lighting, photorealistic.
 Focus on objects, interiors, exteriors, and close-up product shots. No humans or text overlays.
 `;
@@ -68,9 +75,10 @@ Focus on objects, interiors, exteriors, and close-up product shots. No humans or
 export const VOICEOVER_PROMPT = (
     script: string,
     voiceTone: string,
-    location: string
+    location: string,
+    description: string
 ) => `
-Narrate this script with a ${voiceTone} tone for a business in ${location}:
+Narrate this script with a ${voiceTone} tone for a ${description} business in ${location}:
 "${script}"
 Professional commercial quality, clear articulation, natural pacing. Deliver it in a way that feels authentic and relatable to a ${location} audience.
 `;
@@ -80,9 +88,10 @@ export const JINGLE_PROMPT = (
     tagline: string,
     jingleMood: string,
     industry: string,
-    location: string
+    location: string,
+    description: string
 ) => `
-30-second branded jingle for "${brandName}", a ${industry} business in ${location}.
+30-second branded jingle for "${brandName}", a ${industry} business in ${location} that ${description}.
 Tagline: "${tagline}"
 Mood and Style: ${jingleMood}
 The music should resonate with the ${location} market — consider regional flavor or energy that fits the area.

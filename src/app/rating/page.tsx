@@ -102,7 +102,7 @@ function RatingContent() {
               industry: campaign.industry,
               location: campaign.location,
               competitorAnalysis: "",
-              brandDescription: campaign.brandName || "",
+              brandDescription: campaign.description || "",
             }),
           });
           if (!genRes.ok) throw new Error("Logo generation failed");

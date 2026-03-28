@@ -32,10 +32,10 @@ function buildWav(pcm: Buffer, sampleRate = 24000, channels = 1, bitDepth = 16):
 
 export async function POST(req: Request) {
     try {
-        const { script, voiceTone, location } = await req.json();
+        const { script, voiceTone, location, description } = await req.json();
 
         const voice = VOICE_MAP[voiceTone] ?? "Kore";
-        const promptText = VOICEOVER_PROMPT(script, voiceTone, location || "");
+        const promptText = VOICEOVER_PROMPT(script, voiceTone, location || "", description || "");
 
         const result = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",

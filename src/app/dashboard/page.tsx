@@ -177,6 +177,7 @@ function DashboardContent() {
           logoBase64: campaign.approvedLogo,
           brandName: campaign.brandName,
           location: campaign.location || "",
+          description: campaign.description || "",
         }),
       });
       const data = await res.json();
@@ -204,6 +205,7 @@ function DashboardContent() {
           industry: campaign.industry,
           tagline: campaign.proposal!.tagline,
           location: campaign.location || "",
+          description: campaign.description || "",
         }),
       });
       const data = await res.json();
@@ -232,6 +234,7 @@ function DashboardContent() {
           logoBase64: campaign.approvedLogo,
           aspectRatio: "16:9",
           location: campaign.location || "",
+          description: campaign.description || "",
         }),
       });
       const { operationId } = await startRes.json();
@@ -292,6 +295,7 @@ function DashboardContent() {
           script: campaign.proposal!.voiceoverScript,
           voiceTone: campaign.proposal!.voiceTone,
           location: campaign.location || "",
+          description: campaign.description || "",
         }),
       });
       const data = await res.json();

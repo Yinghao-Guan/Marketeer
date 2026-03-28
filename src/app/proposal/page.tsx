@@ -113,6 +113,7 @@ function ProposalContent() {
                     styleLock: campaign.styleLock || { colors: [], style: "" },
                     competitorAnalysis: campaign.competitorAnalysis || {},
                     logoDescription: campaign.logoDescription || "",
+                    description: campaign.description || "",
                     revisionFeedback: feedback,
                 }),
             });
@@ -172,6 +173,7 @@ function ProposalContent() {
                     logoBase64: approvedLogo ?? null,
                     aspectRatio: "16:9",
                     location: campaign.location || "",
+                    description: campaign.description || "",
                 }),
             });
             const startData = await startRes.json();
@@ -228,6 +230,7 @@ function ProposalContent() {
                     logoBase64: approvedLogo ?? null,
                     brandName: campaign.brandName || "",
                     location: campaign.location || "",
+                    description: campaign.description || "",
                 }),
             });
             const data = await res.json();
@@ -257,6 +260,7 @@ function ProposalContent() {
                         industry: campaign.industry || "",
                         tagline: p.tagline,
                         location: campaign.location || "",
+                        description: campaign.description || "",
                     }),
                 });
                 const data = await res.json();
@@ -306,6 +310,7 @@ function ProposalContent() {
                         script: p.voiceoverScript,
                         voiceTone: p.voiceTone,
                         location: campaign.location || "",
+                        description: campaign.description || "",
                     }),
                 });
                 const data = await res.json();
