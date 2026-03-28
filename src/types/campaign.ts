@@ -65,6 +65,7 @@ export interface Campaign {
   location: string;
   industry: string;
   brandName: string;
+  description: string;
 
   // Logo phase
   approvedLogo?: string;
