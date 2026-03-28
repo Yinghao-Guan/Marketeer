@@ -9,7 +9,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:discuss.ai.google.dev)",
       "Bash(npm show:*)",
-      "Bash(sed -i '' '12654s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/node/index.cjs && sed -i '' '7492s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.mjs && sed -i '' '7494s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.cjs)"
+      "Bash(sed -i '' '12654s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/node/index.cjs && sed -i '' '7492s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.mjs && sed -i '' '7494s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.cjs)",
+      "Bash(node -e \"const {GenerateVideosOperation} = require\\('@google/genai'\\); const o = new GenerateVideosOperation\\(\\); console.log\\(Object.getOwnPropertyNames\\(Object.getPrototypeOf\\(o\\)\\)\\)\" 2>&1 | head -20)",
+      "Bash(node -e \"\nconst {GenerateVideosOperation, GoogleGenAI} = require\\('@google/genai'\\);\nconst o = new GenerateVideosOperation\\(\\);\nconsole.log\\(typeof o._fromAPIResponse\\);\n// Check what getVideosOperation does in the SDK source\n\" 2>&1)"
     ]
   }
 }

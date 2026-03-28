@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GenerateVideosOperation, GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -11,10 +11,10 @@ export async function GET(req: Request) {
             return Response.json({ error: "Missing operationId" }, { status: 400 });
         }
 
+        const operationRef = new GenerateVideosOperation();
+        operationRef.name = operationId;
         const operation = await ai.operations.getVideosOperation({
-            operation: { name: operationId } as unknown as Parameters<
-                typeof ai.operations.getVideosOperation
-            >[0]["operation"],
+            operation: operationRef,
         });
 
         if (!operation.done) {
