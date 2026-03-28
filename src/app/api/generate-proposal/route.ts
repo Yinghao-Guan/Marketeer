@@ -1,7 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+import client from "@/lib/gemini";
 import { GENERATE_PROPOSAL_PROMPT } from "@/lib/prompts";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function POST(req: Request) {
     try {
@@ -26,7 +24,7 @@ export async function POST(req: Request) {
             revisionFeedback
         );
 
-        const result = await ai.models.generateContent({
+        const result = await client.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import JSZip from "jszip";
 import AssetCard from "@/components/AssetCard";
 import AudioPlayer from "@/components/AudioPlayer";
@@ -37,6 +38,14 @@ function triggerDownload(base64: string, mimeType: string, filename: string) {
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+function inferAudioType(base64: string): { mime: string; ext: string } {
+  if (base64.startsWith("UklGR")) return { mime: "audio/wav", ext: "wav" };
+  if (base64.startsWith("SUQz") || base64.startsWith("//uQ")) {
+    return { mime: "audio/mpeg", ext: "mp3" };
+  }
+  return { mime: "audio/mpeg", ext: "mp3" };
 }
 
 function bannerByFormat(banners: Banner[], format: Banner["format"]): string {
@@ -230,7 +239,10 @@ export default function DashboardPage() {
         if (b64) zip.file(bannerNames[fmt], b64, { base64: true });
       }
 
-      if (campaign.jingle) zip.file("jingle.wav", campaign.jingle, { base64: true });
+      if (campaign.jingle) {
+        const { ext } = inferAudioType(campaign.jingle);
+        zip.file(`jingle.${ext}`, campaign.jingle, { base64: true });
+      }
       if (campaign.finalVideo) zip.file("video-ad.mp4", campaign.finalVideo, { base64: true });
 
       const brief = [
@@ -273,12 +285,12 @@ export default function DashboardPage() {
         <p className="text-white/50 max-w-sm">
           Complete the setup flow to generate your campaign assets.
         </p>
-        <a
+        <Link
           href="/"
           className="mt-2 px-6 py-2 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium transition-colors"
         >
           Get started
-        </a>
+        </Link>
       </div>
     );
   }
@@ -452,7 +464,14 @@ export default function DashboardPage() {
             title="Audio — 30 seconds"
             isRegenerating={regenerating.jingle}
             onRegenerate={handleRegenerateJingle}
-            onDownload={campaign.jingle ? () => triggerDownload(campaign.jingle, "audio/wav", "jingle.wav") : undefined}
+            onDownload={
+              campaign.jingle
+                ? () => {
+                    const { mime, ext } = inferAudioType(campaign.jingle);
+                    triggerDownload(campaign.jingle, mime, `jingle.${ext}`);
+                  }
+                : undefined
+            }
           >
             {campaign.jingle ? (
               <AudioPlayer src={campaign.jingle} />

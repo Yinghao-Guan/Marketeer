@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   /** base64-encoded MP4 string */
@@ -24,31 +24,31 @@ function base64ToObjectUrl(base64: string, mimeType: string): string {
 
 export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
 
-  // base64 → object URL for video
-  useEffect(() => {
+  const videoUrl = useMemo(() => {
     if (!src) return;
-    const url = base64ToObjectUrl(src, "video/mp4");
-    setVideoUrl(url);
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    return () => URL.revokeObjectURL(url);
+    return base64ToObjectUrl(src, "video/mp4");
   }, [src]);
 
-  // base64 → object URL for poster
-  useEffect(() => {
+  const posterUrl = useMemo(() => {
     if (!poster) return;
-    const url = base64ToObjectUrl(poster, "image/png");
-    setPosterUrl(url);
-    return () => URL.revokeObjectURL(url);
+    return base64ToObjectUrl(poster, "image/png");
   }, [poster]);
+
+  // Revoke generated object URLs when they change/unmount
+  useEffect(() => {
+    if (!videoUrl) return;
+    return () => URL.revokeObjectURL(videoUrl);
+  }, [videoUrl]);
+
+  useEffect(() => {
+    if (!posterUrl) return;
+    return () => URL.revokeObjectURL(posterUrl);
+  }, [posterUrl]);
 
   // Wire video events
   useEffect(() => {

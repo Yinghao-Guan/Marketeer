@@ -7,7 +7,9 @@
       "WebFetch(domain:ai.google.dev)",
       "WebFetch(domain:firebase.google.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:discuss.ai.google.dev)"
+      "WebFetch(domain:discuss.ai.google.dev)",
+      "Bash(npm show:*)",
+      "Bash(sed -i '' '12654s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/node/index.cjs && sed -i '' '7492s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.mjs && sed -i '' '7494s/return urlParts.toString\\(\\);/return urlParts.origin;/' /Users/guanyinghao/WebstormProjects/marketeer/node_modules/@google/genai/dist/index.cjs)"
     ]
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ai from "@/lib/gemini";
+import client from "@/lib/gemini";
 import {
   ANALYZE_LOGO_PROMPT,
   DESCRIBE_STYLE_PROMPT,
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     // Style-only mode: just describe the logo's visual style
     if (body.describeStyleOnly) {
-      const response = await ai.models.generateContent({
+      const response = await client.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
           {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       text: ANALYZE_LOGO_PROMPT(industry, location),
     });
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts }],
       config: {

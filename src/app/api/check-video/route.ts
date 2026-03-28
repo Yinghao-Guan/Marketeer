@@ -11,7 +11,11 @@ export async function GET(req: Request) {
             return Response.json({ error: "Missing operationId" }, { status: 400 });
         }
 
-        const operation = await ai.operations.getVideosOperation({ operation: operationId });
+        const operation = await ai.operations.getVideosOperation({
+            operation: { name: operationId } as unknown as Parameters<
+                typeof ai.operations.getVideosOperation
+            >[0]["operation"],
+        });
 
         if (!operation.done) {
             return Response.json({ done: false, status: "processing" });
