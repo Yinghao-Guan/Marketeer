@@ -111,19 +111,17 @@ export default function ProposalPage() {
         if (generatingStarted.current) return;
         generatingStarted.current = true;
 
-        const campaign = getCampaign();
-        if (!campaign?.proposal || !campaign?.styleLock) {
-            setError("Missing campaign data. Please try again.");
-            setPhase("error");
-            generatingStarted.current = false;
-            return;
-        }
+        // Use proposal from React state — guaranteed non-null here since the button
+        // only renders when phase === "ready" && proposal. Avoids any sessionStorage
+        // timing issues (e.g. styleLock saved async by the rating page's buildStyleLock).
+        const p = proposal!;
+        const campaign = getCampaign() ?? {};
+        const styleLock = campaign.styleLock ?? { colors: [], style: "modern, clean" };
+        const { approvedLogo } = campaign;
 
         setPhase("generating");
         setStepStatuses(STEPS.map(() => "waiting"));
         sessionStorage.removeItem(PROGRESS_KEY);
-
-        const { proposal: p, styleLock, approvedLogo } = campaign;
         let banners: unknown;
         let jingle: string | undefined;
         let videoBase64: string | undefined;
