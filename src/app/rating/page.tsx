@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
-import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
+import { staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
 type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "ready" | "error";

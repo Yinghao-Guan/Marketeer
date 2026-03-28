@@ -374,7 +374,7 @@ export default function DashboardPage() {
         </p>
         <Link
           href="/"
-          className="mt-2 px-6 py-2 rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] text-white text-sm font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+          className="mt-2 px-6 py-2 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium transition-colors"
         >
           Get started
         </Link>
@@ -388,15 +388,10 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen text-white">
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-        className="max-w-5xl mx-auto px-6 py-12 flex flex-col gap-12"
-      >
+      <div className="max-w-5xl mx-auto px-6 py-12 flex flex-col gap-12">
 
         {/* ── Header ── */}
-        <motion.div variants={staggerChild} className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             {campaign.approvedLogo && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -415,7 +410,7 @@ export default function DashboardPage() {
           <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold transition-colors"
           >
             {downloadingAll ? (
               <>
@@ -434,10 +429,10 @@ export default function DashboardPage() {
               </>
             )}
           </button>
-        </motion.div>
+        </div>
 
         {/* ── Tagline & Script ── */}
-        <motion.section variants={staggerChild} className="flex flex-col gap-3">
+        <section className="flex flex-col gap-3">
           <p className="text-3xl font-bold leading-snug">
             &ldquo;{campaign.proposal.tagline}&rdquo;
           </p>
@@ -480,11 +475,11 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
-        </motion.section>
+        </section>
 
         {/* ── Banners ── */}
-        <motion.section variants={staggerChild} className="flex flex-col gap-4">
-          <h2 className="text-[13px] uppercase tracking-[0.15em] font-light text-white/40">Banners</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-white/80">Banners</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* 1:1 */}
             <AssetCard
@@ -547,11 +542,11 @@ export default function DashboardPage() {
               )}
             </AssetCard>
           </div>
-        </motion.section>
+        </section>
 
         {/* ── Jingle ── */}
-        <motion.section variants={staggerChild} className="flex flex-col gap-4">
-          <h2 className="text-[13px] uppercase tracking-[0.15em] font-light text-white/40">Jingle</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-white/80">Jingle</h2>
           <AssetCard
             title="Audio — 30 seconds"
             isRegenerating={regenerating.jingle}
@@ -564,11 +559,11 @@ export default function DashboardPage() {
               <p className="text-white/30 text-sm">No jingle generated</p>
             )}
           </AssetCard>
-        </motion.section>
+        </section>
 
         {/* ── Video Ad ── */}
-        <motion.section variants={staggerChild} className="flex flex-col gap-4">
-          <h2 className="text-[13px] uppercase tracking-[0.15em] font-light text-white/40">Video Ad</h2>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-white/80">Video Ad</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AssetCard
               title="Final Ad (video + voiceover)"
@@ -599,9 +594,9 @@ export default function DashboardPage() {
               </div>
             </AssetCard>
           </div>
-        </motion.section>
+        </section>
 
-      </motion.div>
+      </div>
     </main>
   );
 }
