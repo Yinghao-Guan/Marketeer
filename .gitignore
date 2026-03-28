@@ -51,3 +51,5 @@ next-env.d.ts
 # vibe coding
 AGENTS.md
 CLAUDE.md
+.agents
+.claude
