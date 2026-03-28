@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored FFmpeg runtime assets are served as static files.
+    "public/ffmpeg/**",
   ]),
 ]);
 

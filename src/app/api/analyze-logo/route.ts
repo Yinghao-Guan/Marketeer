@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ai from "@/lib/gemini";
+import client from "@/lib/gemini";
 import {
   ANALYZE_LOGO_PROMPT,
   DESCRIBE_STYLE_PROMPT,
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     // Style-only mode: just describe the logo's visual style
     if (body.describeStyleOnly) {
-      const response = await ai.models.generateContent({
+      const response = await client.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [
           {
@@ -47,10 +47,11 @@ export async function POST(req: NextRequest) {
       location: string;
     };
 
-    // Build content parts: user logo + competitor logos + prompt
+    // Build content parts: clearly label user logo vs competitor logos
     const parts: Array<
       { inlineData: { mimeType: string; data: string } } | { text: string }
     > = [
+      { text: "THIS IS THE USER'S LOGO TO ANALYZE (Image 1):" },
       {
         inlineData: {
           mimeType: "image/png",
@@ -59,20 +60,25 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    for (const compLogo of competitorLogosBase64) {
+    if (competitorLogosBase64.length > 0) {
       parts.push({
-        inlineData: {
-          mimeType: "image/png",
-          data: compLogo,
-        },
+        text: `THE FOLLOWING ${competitorLogosBase64.length} IMAGE(S) ARE COMPETITOR LOGOS — DO NOT analyze or improve these. Only use them for comparison:`,
       });
+      for (const compLogo of competitorLogosBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: "image/png",
+            data: compLogo,
+          },
+        });
+      }
     }
 
     parts.push({
       text: ANALYZE_LOGO_PROMPT(industry, location),
     });
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts }],
       config: {

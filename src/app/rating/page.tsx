@@ -6,7 +6,13 @@ import RatingCard from "@/components/RatingCard";
 import { buildStyleLock } from "@/lib/style-lock";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 
-type Phase = "loading" | "generating-logo" | "analyzing" | "ready" | "error";
+type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "ready" | "error";
+
+interface LogoHistoryEntry {
+  logoBase64: string;
+  rating: LogoRating;
+  improvement?: string;
+}
 
 export default function RatingPage() {
   const router = useRouter();
@@ -16,8 +22,8 @@ export default function RatingPage() {
   const [logoBase64, setLogoBase64] = useState("");
   const [rating, setRating] = useState<LogoRating | null>(null);
   const [applyingIndex, setApplyingIndex] = useState<number | null>(null);
+  const [logoHistory, setLogoHistory] = useState<LogoHistoryEntry[]>([]);
 
-  // Pull campaign state from sessionStorage (set by onboarding pages)
   const getCampaignData = useCallback(() => {
     const data = sessionStorage.getItem("marketeer-campaign");
     return data ? JSON.parse(data) : null;
@@ -34,13 +40,18 @@ export default function RatingPage() {
     [getCampaignData]
   );
 
-  // ── Initial load: generate or analyze logo ─────────────
+  // ── Initial load ──────────────────────────────────────
   useEffect(() => {
     const campaign = getCampaignData();
     if (!campaign) {
       setError("No campaign data found. Please start from the beginning.");
       setPhase("error");
       return;
+    }
+
+    // Load history if available
+    if (campaign.logoHistory) {
+      setLogoHistory(campaign.logoHistory);
     }
 
     // Use cached rating if available
@@ -55,7 +66,6 @@ export default function RatingPage() {
       try {
         let logo = campaign.userLogo;
 
-        // Path B: no logo — generate one first
         if (!logo) {
           setPhase("generating-logo");
           const genRes = await fetch("/api/generate-logo", {
@@ -75,9 +85,8 @@ export default function RatingPage() {
         }
 
         setLogoBase64(logo);
-
-        // Analyze the logo
         setPhase("analyzing");
+
         const analyzeRes = await fetch("/api/analyze-logo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -93,6 +102,12 @@ export default function RatingPage() {
 
         setRating(ratingData);
         saveCampaignData({ logoRating: ratingData });
+
+        // Save initial logo to history
+        const initialEntry: LogoHistoryEntry = { logoBase64: logo, rating: ratingData };
+        setLogoHistory([initialEntry]);
+        saveCampaignData({ logoHistory: [initialEntry] });
+
         setPhase("ready");
       } catch (e) {
         console.error(e);
@@ -105,10 +120,11 @@ export default function RatingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Apply improvement ──────────────────────────────────
+  // ── Apply improvement ─────────────────────────────────
   const handleApplyImprovement = async (index: number) => {
     if (!rating || !logoBase64) return;
     setApplyingIndex(index);
+    setPhase("improving");
 
     try {
       const improvement = rating.improvements[index];
@@ -127,7 +143,7 @@ export default function RatingPage() {
       setLogoBase64(newLogo);
       saveCampaignData({ userLogo: newLogo });
 
-      // Re-analyze with the improved logo
+      // Re-analyze
       setPhase("analyzing");
       const campaign = getCampaignData();
       const analyzeRes = await fetch("/api/analyze-logo", {
@@ -145,20 +161,42 @@ export default function RatingPage() {
 
       setRating(newRating);
       saveCampaignData({ logoRating: newRating });
+
+      // Add to history
+      const entry: LogoHistoryEntry = {
+        logoBase64: newLogo,
+        rating: newRating,
+        improvement: improvement.suggestion,
+      };
+      const updatedHistory = [...logoHistory, entry];
+      setLogoHistory(updatedHistory);
+      saveCampaignData({ logoHistory: updatedHistory });
+
       setPhase("ready");
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Improvement failed");
+      setPhase("error");
     } finally {
       setApplyingIndex(null);
     }
   };
 
-  // ── Approve & continue ─────────────────────────────────
+  // ── Revert to previous logo ───────────────────────────
+  const handleRevert = (historyIndex: number) => {
+    const entry = logoHistory[historyIndex];
+    setLogoBase64(entry.logoBase64);
+    setRating(entry.rating);
+    saveCampaignData({
+      userLogo: entry.logoBase64,
+      logoRating: entry.rating,
+    });
+  };
+
+  // ── Approve & continue ────────────────────────────────
   const handleApprove = () => {
     saveCampaignData({ approvedLogo: logoBase64 });
 
-    // Start style lock extraction in the background — don't block navigation
     buildStyleLock(logoBase64)
       .then((styleLock: StyleLock) => saveCampaignData({ styleLock }))
       .catch(() =>
@@ -170,33 +208,40 @@ export default function RatingPage() {
     router.push("/proposal");
   };
 
-  // ── Render ─────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-center mb-2">Logo Rating</h1>
-        <p className="text-neutral-400 text-center mb-8">
-          {phase === "generating-logo"
-            ? "Generating your logo..."
-            : phase === "analyzing"
-              ? "Analyzing your logo with AI..."
-              : phase === "ready"
-                ? "Here's how your logo performs across formats"
-                : ""}
-        </p>
-
-        {/* Loading / generating states */}
+        {/* Loading states */}
         {(phase === "loading" ||
           phase === "generating-logo" ||
-          phase === "analyzing") && (
-          <div className="flex flex-col items-center gap-4 py-16">
-            <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          phase === "analyzing" ||
+          phase === "improving") && (
+          <div className="flex flex-col items-center gap-6 py-24">
+            <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <p className="text-2xl font-semibold text-white text-center">
+              {phase === "generating-logo"
+                ? "Creating your logo..."
+                : phase === "improving"
+                  ? "Applying improvement..."
+                  : "Analyzing your logo..."}
+            </p>
             <p className="text-neutral-400 text-sm">
               {phase === "generating-logo"
-                ? "Creating a logo for your brand..."
-                : "Running marketing analysis..."}
+                ? "Designing something unique for your brand"
+                : phase === "improving"
+                  ? "Refining your logo based on feedback"
+                  : "Running marketing analysis across formats"}
             </p>
           </div>
+        )}
+
+        {phase === "ready" && (
+          <>
+            <h1 className="text-3xl font-bold text-center mb-2">Logo Rating</h1>
+            <p className="text-neutral-400 text-center mb-8">
+              Here&apos;s how your logo performs across formats
+            </p>
+          </>
         )}
 
         {/* Error */}
@@ -212,12 +257,12 @@ export default function RatingPage() {
           </div>
         )}
 
-        {/* Ready: show logo + ratings */}
+        {/* Ready */}
         {phase === "ready" && rating && (
           <>
             {/* Logo preview */}
             <div className="flex justify-center mb-8">
-              <div className="w-48 h-48 rounded-2xl border border-neutral-800 bg-neutral-900 overflow-hidden flex items-center justify-center">
+              <div className="w-48 h-48 rounded-[32px] border border-neutral-700 bg-white p-5 flex items-center justify-center shadow-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/png;base64,${logoBase64}`}
@@ -227,12 +272,52 @@ export default function RatingPage() {
               </div>
             </div>
 
-            {/* Rating details */}
+            {/* Rating */}
             <RatingCard
               rating={rating}
               onApplyImprovement={handleApplyImprovement}
               applyingIndex={applyingIndex}
             />
+
+            {/* Logo History */}
+            {logoHistory.length > 1 && (
+              <div className="mt-8 rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  Generation History
+                </h3>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {logoHistory.map((entry, i) => {
+                    const isActive = entry.logoBase64 === logoBase64;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleRevert(i)}
+                        className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-colors ${
+                          isActive
+                            ? "ring-2 ring-white bg-neutral-800"
+                            : "hover:bg-neutral-800/50"
+                        }`}
+                      >
+                        <div className="w-16 h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`data:image/png;base64,${entry.logoBase64}`}
+                            alt={`Version ${i + 1}`}
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                        <span className="text-xs text-neutral-400">
+                          v{i + 1}
+                        </span>
+                        <span className="text-xs font-semibold text-green-500">
+                          {entry.rating.overallRating.toFixed(1)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Approve button */}
             <div className="mt-8 flex justify-center">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ai from "@/lib/gemini";
+import client from "@/lib/gemini";
 import { IMPROVE_LOGO_PROMPT } from "@/lib/prompts";
 import type { StyleLock } from "@/types/campaign";
 
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const prompt = IMPROVE_LOGO_PROMPT(improvement, styleLock?.style);
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash-preview-image-generation",
       contents: [
         {

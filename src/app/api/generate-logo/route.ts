@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ai from "@/lib/gemini";
+import client from "@/lib/gemini";
 import { GENERATE_LOGO_PROMPT } from "@/lib/prompts";
 
 export async function POST(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       brandDescription
     );
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash-preview-image-generation",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {

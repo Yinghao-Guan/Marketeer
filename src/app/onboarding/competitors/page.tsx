@@ -14,7 +14,7 @@ export default function CompetitorsPage() {
     const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
     const competitorLogos = images.map((f) => f.split(",")[1]);
     sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, competitorLogos }));
-    router.push("/onboarding/location");
+    router.push("/onboarding/brand-name");
   };
 
   const addFiles = useCallback((fileList: FileList) => {
@@ -50,12 +50,12 @@ export default function CompetitorsPage() {
   return (
     <StepWizard>
       <div className="flex flex-col flex-1 items-center justify-center px-4">
-        <div className="w-full max-w-lg space-y-6 rounded-2xl bg-white/5 p-8 backdrop-blur-sm ring-1 ring-white/10">
+        <div className="w-full max-w-lg space-y-6 rounded-2xl bg-neutral-900 p-8 border border-neutral-800">
           <div>
             <h2 className="text-2xl font-bold text-white">
               Upload competitor material
             </h2>
-            <p className="mt-1 text-white/50">
+            <p className="mt-1 text-neutral-400">
               Logos, flyers, or photos — we&apos;ll make sure your brand stands
               apart. The more you upload, the better we can evaluate your market
               position.
@@ -67,7 +67,7 @@ export default function CompetitorsPage() {
             {images.map((src, i) => (
               <div
                 key={i}
-                className="group relative h-28 w-28 flex-shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10"
+                className="group relative h-28 w-28 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-700"
               >
                 <img
                   src={src}
@@ -94,12 +94,12 @@ export default function CompetitorsPage() {
               onDragLeave={() => setIsDragging(false)}
               className={`flex h-28 flex-1 min-w-[7rem] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
                 isDragging
-                  ? "border-white bg-white/10"
-                  : "border-white/20 hover:border-white/40"
+                  ? "border-white bg-neutral-800"
+                  : "border-neutral-700 hover:border-neutral-500"
               }`}
             >
-              <span className="text-2xl text-white/40">+</span>
-              <span className="mt-1 text-xs text-white/40">
+              <span className="text-2xl text-neutral-500">+</span>
+              <span className="mt-1 text-xs text-neutral-500">
                 {images.length === 0 ? "Add image" : "Add another"}
               </span>
             </div>
@@ -121,7 +121,7 @@ export default function CompetitorsPage() {
 
           <button
             onClick={handleNext}
-            className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
+            className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-neutral-200"
           >
             {images.length > 0 ? "Continue" : "Skip"}
           </button>
