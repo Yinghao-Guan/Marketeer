@@ -11,7 +11,7 @@ import { fadeBlur, staggerContainer, staggerChild } from "@/lib/motion";
 import type { LogoRating, StyleLock } from "@/types/campaign";
 import { getCampaign, updateCampaign } from "@/lib/store";
 
-type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "ready" | "error";
+type Phase = "loading" | "generating-logo" | "analyzing" | "improving" | "regenerating" | "ready" | "error";
 
 interface LogoHistoryEntry {
   logoBase64: string;
@@ -213,6 +213,62 @@ function RatingContent() {
     }
   };
 
+  // ── Regenerate from scratch ───────────────────────────
+  const handleRegenerateFromScratch = async () => {
+    const campaign = getCampaignData();
+    if (!campaign) return;
+    setPrevRating(null);
+    setPhase("regenerating");
+
+    try {
+      setPhase("generating-logo");
+      const genRes = await fetch("/api/generate-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          industry: campaign.industry,
+          location: campaign.location,
+          competitorAnalysis: "",
+          brandDescription: campaign.description || "",
+        }),
+      });
+      if (!genRes.ok) throw new Error("Logo generation failed");
+      const genData = await genRes.json();
+      const newLogo = genData.imageBase64;
+
+      setLogoBase64(newLogo);
+      saveCampaignData({ userLogo: newLogo });
+
+      setPhase("analyzing");
+      const analyzeRes = await fetch("/api/analyze-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          logoBase64: newLogo,
+          competitorLogosBase64: campaign.competitorLogos || [],
+          industry: campaign.industry || "general",
+          location: campaign.location || "",
+        }),
+      });
+      if (!analyzeRes.ok) throw new Error("Logo analysis failed");
+      const newRating: LogoRating = await analyzeRes.json();
+
+      setRating(newRating);
+      saveCampaignData({ logoRating: newRating });
+
+      const entry: LogoHistoryEntry = { logoBase64: newLogo, rating: newRating };
+      const updatedHistory = [...logoHistory, entry];
+      setLogoHistory(updatedHistory);
+      saveCampaignData({ logoHistory: updatedHistory });
+
+      setPhase("ready");
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : "Regeneration failed");
+      setPhase("error");
+    }
+  };
+
   // ── Revert to previous logo ───────────────────────────
   const handleRevert = (historyIndex: number) => {
     const entry = logoHistory[historyIndex];
@@ -290,7 +346,8 @@ function RatingContent() {
         {(phase === "loading" ||
           phase === "generating-logo" ||
           phase === "analyzing" ||
-          phase === "improving") && (() => {
+          phase === "improving" ||
+          phase === "regenerating") && (() => {
           const isImproving = phase === "improving";
           const steps = isImproving
             ? [
@@ -450,7 +507,7 @@ function RatingContent() {
             )}
 
             {/* Approve button — at the bottom after all content */}
-            <motion.div variants={staggerChild} className="mt-10 flex justify-center">
+            <motion.div variants={staggerChild} className="mt-10 flex flex-col items-center gap-3">
               <button
                 onClick={handleApprove}
                 className="px-10 py-3 rounded-full bg-white text-black font-semibold text-lg
@@ -458,6 +515,15 @@ function RatingContent() {
               >
                 approve &amp; continue
               </button>
+              {!hadUserLogo && (
+                <button
+                  onClick={handleRegenerateFromScratch}
+                  className="px-6 py-2 rounded-full border border-white/20 text-white/60 text-sm font-medium
+                    hover:border-white/40 hover:text-white hover:bg-white/[0.06] active:scale-[0.98] transition-all duration-300"
+                >
+                  not happy? regenerate from scratch
+                </button>
+              )}
             </motion.div>
           </>
         )}
