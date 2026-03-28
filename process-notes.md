@@ -68,3 +68,29 @@ The learner was significantly more engaged in this phase:
 - Requested use of the AskUserQuestion tool when they wanted structured options — showing awareness of the tools available.
 
 ## /spec
+
+### Technical decisions and rationale
+- **Next.js for everything** — learner briefly considered FastAPI (Python backend) but ultimately chose to keep the original Next.js plan for simplicity. One framework, one deployment.
+- **Vercel deployment** — natural fit with Next.js, one-click deploy.
+- **Tailwind + shadcn/ui + React Bits + Framer Motion** — learner wanted "sexy" UI that's not cookie-cutter. This combo gives them solid structure (shadcn), utility styling (Tailwind), animated flair (React Bits), and smooth transitions (Framer Motion).
+- **IndexedDB for persistence** — learner suggested local storage approach, landed on IndexedDB for browser-side campaign persistence.
+- **FFmpeg WASM client-side** — for merging Veo video with TTS voiceover. Chose WASM over server-side to avoid Vercel deployment issues. Learner was concerned about demo quality impact — reassured that 4-8s 720p merge is trivial for WASM.
+- **App renamed to Marketeer** — learner chose this name.
+
+### What the learner was confident about vs uncertain
+- **Confident:** Next.js as the framework, Vercel deployment, keeping the original team split, the app name "Marketeer"
+- **Uncertain:** CSS/styling choices (said "whatever just as long as they look sexy"), FastAPI vs Next.js (briefly wavered then committed to Next.js), FFmpeg WASM quality concerns
+
+### Self-review findings
+- Lyria WebSocket in serverless function is risky but feasible within 60s timeout
+- FFmpeg WASM should be client-side, not an API route — corrected in the spec
+- Person 3 has the heaviest workload (proposal + all 4 generation endpoints) — suggested rebalancing but learner preferred to keep the original split
+
+### Stack choices
+- Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, React Bits, Framer Motion, @google/genai SDK, @ffmpeg/ffmpeg WASM, IndexedDB (via idb), JSZip for downloads
+
+### Active shaping
+- Learner initiated the FastAPI consideration on their own, then made the call to stay with Next.js after hearing the tradeoffs
+- Named the app "Marketeer" unprompted
+- Pushed back on rebalancing the team split — wanted to keep original assignments
+- Asked for suggestions on styling but set a clear bar ("look sexy, no basic hover animations")
