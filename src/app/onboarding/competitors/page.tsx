@@ -11,7 +11,7 @@ export default function CompetitorsPage() {
   return (
     <StepWizard>
       <div className="flex flex-col flex-1 items-center justify-center px-4">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-6 rounded-2xl bg-white/5 p-8 backdrop-blur-sm ring-1 ring-white/10">
           <div>
             <h2 className="text-2xl font-bold text-white">
               Upload competitor material
