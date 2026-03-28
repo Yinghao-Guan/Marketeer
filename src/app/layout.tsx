@@ -23,6 +23,11 @@ const dirtyline = localFont({
 export const metadata: Metadata = {
   title: "Marketeer",
   description: "AI-powered marketing campaigns for small businesses - in minutes, not months",
+  icons: {
+    icon: "/marketeer-icon.svg",
+    shortcut: "/marketeer-icon.svg",
+    apple: "/marketeer-icon.svg",
+  },
 };
 
 export const viewport = {
