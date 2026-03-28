@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Read(//c/msys64/ucrt64/bin/**)"
+    ]
+  }
+}

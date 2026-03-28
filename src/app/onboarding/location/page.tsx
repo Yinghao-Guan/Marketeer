@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StepWizard from "@/components/StepWizard";
 
 export default function LocationPage() {
+  const router = useRouter();
   const [location, setLocation] = useState("");
+
+  const handleNext = () => {
+    const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
+    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, location }));
+    router.push("/onboarding/industry");
+  };
 
   return (
     <StepWizard>
@@ -27,12 +34,12 @@ export default function LocationPage() {
             className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
           />
           {location.trim().length > 0 && (
-            <Link
-              href="/onboarding/industry"
+            <button
+              onClick={handleNext}
               className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
             >
               Next
-            </Link>
+            </button>
           )}
         </div>
       </div>

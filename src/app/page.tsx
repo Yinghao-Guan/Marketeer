@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 const fadeUp = {
@@ -13,6 +13,13 @@ const fadeUp = {
 };
 
 export default function Home() {
+  const router = useRouter();
+
+  const start = (hasLogo: boolean) => {
+    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ hasLogo }));
+    router.push(hasLogo ? "/onboarding/upload-logo" : "/onboarding/location");
+  };
+
   return (
     <div className="flex flex-col flex-1 items-center justify-center gap-6">
       <motion.h1
@@ -57,21 +64,21 @@ export default function Home() {
         custom={0.45}
         className="flex gap-5 mt-2"
       >
-        <Link
-          href="/onboarding/upload-logo"
+        <button
+          onClick={() => start(true)}
           className="rounded-xl bg-white px-10 py-4 text-lg font-semibold text-black transition-all hover:bg-white/90 hover:scale-105"
           style={{
             boxShadow: "0 0 30px rgba(255, 255, 255, 0.15)",
           }}
         >
           Yes
-        </Link>
-        <Link
-          href="/onboarding/location"
+        </button>
+        <button
+          onClick={() => start(false)}
           className="rounded-xl border border-white/20 px-10 py-4 text-lg font-semibold text-white transition-all hover:bg-white/10 hover:scale-105"
         >
           No
-        </Link>
+        </button>
       </motion.div>
     </div>
   );

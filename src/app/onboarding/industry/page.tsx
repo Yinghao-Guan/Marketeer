@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StepWizard from "@/components/StepWizard";
 
 const industries = [
@@ -18,6 +18,7 @@ const industries = [
 ];
 
 export default function IndustryPage() {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [otherText, setOtherText] = useState("");
 
@@ -61,12 +62,17 @@ export default function IndustryPage() {
             />
           )}
           {hasSelection && (
-            <Link
-              href="/rating"
+            <button
+              onClick={() => {
+                const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
+                const industry = selected === "Other" ? otherText.trim() : selected!;
+                sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, industry }));
+                router.push("/rating");
+              }}
               className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
             >
               Next
-            </Link>
+            </button>
           )}
         </div>
       </div>
