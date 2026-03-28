@@ -572,10 +572,10 @@ function DashboardContent() {
                 <img
                   src={`data:image/png;base64,${banner9x16}`}
                   alt="Portrait banner"
-                  className="w-full aspect-[9/16] max-h-48 object-contain rounded-lg bg-black/20 mx-auto"
+                  className="w-full aspect-[9/16] object-contain rounded-lg bg-black/20"
                 />
               ) : (
-                <div className="w-full aspect-[9/16] max-h-48 rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-sm">
+                <div className="w-full aspect-[9/16] rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-sm">
                   no banner
                 </div>
               )}
