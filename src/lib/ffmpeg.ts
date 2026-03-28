@@ -6,7 +6,7 @@
 const FFMPEG_CORE_PATH = "/ffmpeg/ffmpeg-core.js";
 const FFMPEG_WASM_PATH = "/ffmpeg/ffmpeg-core.wasm";
 const FFMPEG_CLASS_WORKER_PATH = "/ffmpeg/ffmpeg-worker.js";
-export const FINAL_VIDEO_VERSION = 2;
+export const FINAL_VIDEO_VERSION = 3;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let ffmpegInstance: any | null = null;
@@ -109,19 +109,22 @@ export async function mergeVideoAudio(
   await ffmpegInstance.writeFile(audioInput.filename, await fetchFile(audioBlob));
 
   try {
-    // Loop the source video to the full audio length so the final ad is not
-    // truncated to Veo's 8-second clip duration.
+    // Produce a browser-safe MP4 from the generated 8s Veo clip.
+    // Keep the source video duration and trim audio to match.
     const exitCode = await ffmpegInstance.exec([
       "-y",
-      "-stream_loop", "-1",
-      "-fflags", "+genpts",
       "-i", "input.mp4",
       "-i", audioInput.filename,
       "-map", "0:v:0",
       "-map", "1:a:0",
-      "-c:v", "copy",
+      "-r", "30",
+      "-c:v", "libx264",
+      "-preset", "ultrafast",
+      "-profile:v", "baseline",
+      "-pix_fmt", "yuv420p",
       "-c:a", "aac",
       "-ar", "48000",
+      "-ac", "2",
       "-avoid_negative_ts", "make_zero",
       "-movflags", "+faststart",
       "-shortest",

@@ -107,6 +107,12 @@ export default function DashboardPage() {
             resolvedCampaign = { ...latestCampaign, ...repair };
           } catch (error) {
             console.error("Final video repair failed:", error);
+            const fallback = {
+              finalVideo: latestCampaign.video,
+              finalVideoVersion: FINAL_VIDEO_VERSION,
+            };
+            await updateCampaign(latestCampaign.id, fallback);
+            resolvedCampaign = { ...latestCampaign, ...fallback };
           }
         }
 

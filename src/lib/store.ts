@@ -194,7 +194,7 @@ if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
         video: TINY_WAV,
         voiceover: TINY_WAV,
         finalVideo: TINY_WAV,
-        finalVideoVersion: 2,
+        finalVideoVersion: 3,
         currentStep: "dashboard",
       };
       await saveCampaign(fixture);
