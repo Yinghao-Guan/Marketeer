@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { saveCampaign, type Banner } from "@/lib/store";
-import { mergeVideoAudio } from "@/lib/ffmpeg";
+import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 import ProposalCard from "@/components/ProposalCard";
 import AudioPlayer from "@/components/AudioPlayer";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -215,6 +215,10 @@ export default function ProposalPage() {
                     saveProgress({ operationId });
                 }
 
+                if (!operationId) {
+                    throw new Error("Video generation did not return an operation ID");
+                }
+
                 const deadline = Date.now() + 2 * 60 * 1000;
                 while (Date.now() < deadline) {
                     await new Promise((r) => setTimeout(r, 5000));
@@ -302,6 +306,7 @@ export default function ProposalPage() {
             video: videoBase64!,
             voiceover,
             finalVideo,
+            finalVideoVersion: FINAL_VIDEO_VERSION,
             currentStep: "dashboard",
         });
 

@@ -65,6 +65,7 @@ export interface Campaign {
   video: string;
   voiceover: string;
   finalVideo: string;
+  finalVideoVersion?: number;
 
   // State
   currentStep:
@@ -193,6 +194,7 @@ if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
         video: TINY_WAV,
         voiceover: TINY_WAV,
         finalVideo: TINY_WAV,
+        finalVideoVersion: 2,
         currentStep: "dashboard",
       };
       await saveCampaign(fixture);

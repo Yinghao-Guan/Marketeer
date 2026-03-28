@@ -81,6 +81,7 @@ export interface Campaign {
   video: string;
   voiceover: string;
   finalVideo: string;
+  finalVideoVersion?: number;
 
   // State
   currentStep:

@@ -13,7 +13,7 @@ import {
   Campaign,
   Banner,
 } from "@/lib/store";
-import { mergeVideoAudio } from "@/lib/ffmpeg";
+import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,13 +71,61 @@ export default function DashboardPage() {
 
   // ── Load campaign from IndexedDB on mount ──
   useEffect(() => {
-    initDB()
-      .then(getLatestCampaign)
-      .then((c) => {
-        setCampaign(c ?? null);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+
+    const loadCampaign = async () => {
+      try {
+        await initDB();
+        const latestCampaign = await getLatestCampaign();
+
+        if (!latestCampaign) {
+          if (!cancelled) {
+            setCampaign(null);
+            setLoading(false);
+          }
+          return;
+        }
+
+        let resolvedCampaign = latestCampaign;
+        const needsFinalVideoRepair =
+          latestCampaign.currentStep === "dashboard" &&
+          !!latestCampaign.video &&
+          !!latestCampaign.voiceover &&
+          latestCampaign.finalVideoVersion !== FINAL_VIDEO_VERSION;
+
+        if (needsFinalVideoRepair) {
+          try {
+            const repairedFinalVideo = await mergeVideoAudio(
+              latestCampaign.video,
+              latestCampaign.voiceover
+            );
+            const repair = {
+              finalVideo: repairedFinalVideo,
+              finalVideoVersion: FINAL_VIDEO_VERSION,
+            };
+            await updateCampaign(latestCampaign.id, repair);
+            resolvedCampaign = { ...latestCampaign, ...repair };
+          } catch (error) {
+            console.error("Final video repair failed:", error);
+          }
+        }
+
+        if (!cancelled) {
+          setCampaign(resolvedCampaign);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCampaign();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Cleanup video polling on unmount ──
@@ -184,8 +232,17 @@ export default function DashboardPage() {
 
       // Step 3: merge with existing voiceover
       const finalVideo = await mergeVideoAudio(videoBase64, campaign.voiceover);
-      await updateCampaign(campaign.id, { video: videoBase64, finalVideo });
-      setCampaign((c) => c && { ...c, video: videoBase64, finalVideo });
+      await updateCampaign(campaign.id, {
+        video: videoBase64,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
+      setCampaign((c) => c && {
+        ...c,
+        video: videoBase64,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
     } catch (e) {
       console.error("Video regeneration failed:", e);
     } finally {
@@ -210,8 +267,17 @@ export default function DashboardPage() {
 
       // Re-merge with existing raw video
       const finalVideo = await mergeVideoAudio(campaign.video, voiceover);
-      await updateCampaign(campaign.id, { voiceover, finalVideo });
-      setCampaign((c) => c && { ...c, voiceover, finalVideo });
+      await updateCampaign(campaign.id, {
+        voiceover,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
+      setCampaign((c) => c && {
+        ...c,
+        voiceover,
+        finalVideo,
+        finalVideoVersion: FINAL_VIDEO_VERSION,
+      });
     } catch (e) {
       console.error("Voiceover regeneration failed:", e);
     } finally {

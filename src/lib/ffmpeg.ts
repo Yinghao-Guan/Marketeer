@@ -3,11 +3,21 @@
 // WASM binary (~25MB) is loaded from CDN; call preloadFFmpeg() during onboarding
 // so it's ready by the time the dashboard needs to merge video + voiceover.
 
-const FFMPEG_CORE_URL = "/ffmpeg/ffmpeg-core.js";
-const FFMPEG_WASM_URL = "/ffmpeg/ffmpeg-core.wasm";
+const FFMPEG_CORE_PATH = "/ffmpeg/ffmpeg-core.js";
+const FFMPEG_WASM_PATH = "/ffmpeg/ffmpeg-core.wasm";
+const FFMPEG_CLASS_WORKER_PATH = "/ffmpeg/ffmpeg-worker.js";
+export const FINAL_VIDEO_VERSION = 2;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let ffmpegInstance: any | null = null;
+let ffmpegLoggerAttached = false;
+let ffmpegLastError = "";
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return fallback;
+}
 
 function inferAudioInput(base64: string): { mimeType: string; filename: string } {
   if (base64.startsWith("UklGR")) {
@@ -25,6 +35,11 @@ function assertBrowser() {
   }
 }
 
+function getBrowserAssetUrl(path: string): string {
+  assertBrowser();
+  return new URL(path, window.location.origin).toString();
+}
+
 /**
  * Preload the FFmpeg WASM binary from CDN.
  * Safe to call multiple times — subsequent calls are no-ops.
@@ -37,9 +52,18 @@ export async function preloadFFmpeg(): Promise<void> {
 
   const { FFmpeg } = await import("@ffmpeg/ffmpeg");
   ffmpegInstance = new FFmpeg();
+  if (!ffmpegLoggerAttached) {
+    ffmpegInstance.on("log", ({ type, message }: { type: string; message: string }) => {
+      if (type === "stderr" && message.trim()) {
+        ffmpegLastError = message.trim();
+      }
+    });
+    ffmpegLoggerAttached = true;
+  }
   await ffmpegInstance.load({
-    coreURL: FFMPEG_CORE_URL,
-    wasmURL: FFMPEG_WASM_URL,
+    coreURL: getBrowserAssetUrl(FFMPEG_CORE_PATH),
+    wasmURL: getBrowserAssetUrl(FFMPEG_WASM_PATH),
+    classWorkerURL: getBrowserAssetUrl(FFMPEG_CLASS_WORKER_PATH),
   });
 }
 
@@ -55,6 +79,7 @@ export async function mergeVideoAudio(
   audioBase64: string
 ): Promise<string> {
   assertBrowser();
+  ffmpegLastError = "";
 
   // Ensure FFmpeg is loaded
   if (!ffmpegInstance?.loaded) {
@@ -83,32 +108,45 @@ export async function mergeVideoAudio(
   await ffmpegInstance.writeFile("input.mp4", await fetchFile(videoBlob));
   await ffmpegInstance.writeFile(audioInput.filename, await fetchFile(audioBlob));
 
-  // Merge: copy video track, re-encode WAV → AAC for MP4 compatibility
-  // -shortest: stop when the shorter stream ends (voiceover may be shorter than video)
-  await ffmpegInstance.exec([
-    "-y",
-    "-i", "input.mp4",
-    "-i", audioInput.filename,
-    "-c:v", "copy",
-    "-c:a", "aac",
-    "-map", "0:v:0",
-    "-map", "1:a:0",
-    "-shortest",
-    "output.mp4",
-  ]);
+  try {
+    // Loop the source video to the full audio length so the final ad is not
+    // truncated to Veo's 8-second clip duration.
+    const exitCode = await ffmpegInstance.exec([
+      "-y",
+      "-stream_loop", "-1",
+      "-fflags", "+genpts",
+      "-i", "input.mp4",
+      "-i", audioInput.filename,
+      "-map", "0:v:0",
+      "-map", "1:a:0",
+      "-c:v", "copy",
+      "-c:a", "aac",
+      "-ar", "48000",
+      "-avoid_negative_ts", "make_zero",
+      "-movflags", "+faststart",
+      "-shortest",
+      "output.mp4",
+    ]);
 
-  const data: Uint8Array = await ffmpegInstance.readFile("output.mp4");
+    if (exitCode !== 0) {
+      throw new Error(ffmpegLastError || `FFmpeg exited with code ${exitCode}`);
+    }
 
-  // Clean up WASM virtual FS to free memory
-  await ffmpegInstance.deleteFile("input.mp4").catch(() => {});
-  await ffmpegInstance.deleteFile("audio.wav").catch(() => {});
-  await ffmpegInstance.deleteFile("audio.mp3").catch(() => {});
-  await ffmpegInstance.deleteFile("output.mp4").catch(() => {});
+    const data: Uint8Array = await ffmpegInstance.readFile("output.mp4");
 
-  // Convert Uint8Array → base64
-  let binary = "";
-  for (let i = 0; i < data.byteLength; i++) {
-    binary += String.fromCharCode(data[i]);
+    // Convert Uint8Array → base64
+    let binary = "";
+    for (let i = 0; i < data.byteLength; i++) {
+      binary += String.fromCharCode(data[i]);
+    }
+    return btoa(binary);
+  } catch (error) {
+    throw new Error(getErrorMessage(error, ffmpegLastError || "Video merge failed"));
+  } finally {
+    // Clean up WASM virtual FS to free memory
+    await ffmpegInstance.deleteFile("input.mp4").catch(() => {});
+    await ffmpegInstance.deleteFile("audio.wav").catch(() => {});
+    await ffmpegInstance.deleteFile("audio.mp3").catch(() => {});
+    await ffmpegInstance.deleteFile("output.mp4").catch(() => {});
   }
-  return btoa(binary);
 }

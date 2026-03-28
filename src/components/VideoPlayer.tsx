@@ -57,25 +57,33 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
     const onTimeUpdate = () => setCurrentTime(video.currentTime);
     const onLoaded = () => setDuration(video.duration);
     const onEnded = () => setIsPlaying(false);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("loadedmetadata", onLoaded);
     video.addEventListener("ended", onEnded);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
     return () => {
       video.removeEventListener("timeupdate", onTimeUpdate);
       video.removeEventListener("loadedmetadata", onLoaded);
       video.removeEventListener("ended", onEnded);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
     };
   }, []);
 
-  function togglePlay() {
+  async function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) {
       video.pause();
-      setIsPlaying(false);
     } else {
-      video.play();
-      setIsPlaying(true);
+      try {
+        await video.play();
+      } catch {
+        setIsPlaying(false);
+      }
     }
   }
 
@@ -114,6 +122,7 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
           poster={posterUrl ?? undefined}
           className="w-full max-h-72 object-contain bg-black"
           preload="metadata"
+          playsInline
         />
 
         {/* Play overlay shown when paused */}
