@@ -81,23 +81,45 @@ Include original lyrics inspired by the brand and a catchy melody.
 export function ANALYZE_LOGO_PROMPT(industry: string, location: string) {
   return `You are an expert marketing designer and brand strategist.
 
-Analyze the provided logo for a ${industry} business located in ${location}.
-Also consider the competitor logos provided for comparison.
+IMPORTANT: The FIRST image provided is the USER'S LOGO — this is the ONLY logo you are rating and suggesting improvements for. Any additional images are COMPETITOR logos for comparison only. Do NOT suggest changes that would make the user's logo look more like a competitor. Do NOT reference competitor brand names or elements in your improvement suggestions.
 
-Rate the logo on a scale of 1-10 overall, and provide per-format ratings for:
+Analyze the USER'S LOGO (the first image) for a ${industry} business located in ${location}.
+
+Rate this logo on a scale of 1-10 overall, and provide per-format ratings for:
 - **Banner**: How effective is this logo when placed on horizontal marketing banners?
 - **Video**: How well does this logo work in motion/video ad contexts? (clarity at small sizes, simplicity for animation)
 - **Social**: How recognizable and effective is this logo as a social media profile picture or post graphic?
 
 For each rating, provide specific marketing reasoning — not generic praise.
 
-Also provide concrete improvement suggestions ranked by priority (high, medium, low). Each suggestion should include:
-- What to change
-- Why it matters from a marketing perspective
+IMPROVEMENT SUGGESTIONS — follow these rules strictly based on the overall rating:
 
-Finally, compare against the competitor logos:
+**If overall rating is 9.0 or above:** Do NOT suggest any improvements. Return an empty improvements array []. The logo is excellent as-is.
+
+**If overall rating is 7.0–8.9:** Only suggest minor fine-tuning. Focus on:
+- Refining edges and small details for crisp rendering
+- Ensuring the logo works well in video/motion contexts at various sizes
+- Return at most 1-2 low-priority suggestions
+
+**If overall rating is 5.0–6.9:** Suggest a few targeted improvements:
+- Evaluate the color palette — does it work well for the ${industry} industry? Recommend specific color adjustments if needed
+- Compare against competitor logos and ensure the user's logo has a clear differentiating factor (color, style, or shape)
+- Return 2-3 suggestions, mix of medium and low priority
+
+**If overall rating is below 5.0:** Provide comprehensive improvement suggestions:
+- All of the above (colors, competitor differentiation)
+- Research ${industry} industry best practices for logos and suggest alignment
+- If the logo is overly complex, suggest simplification for better recognition at small sizes
+- Return 3-4 suggestions, including high priority ones
+
+Each suggestion should:
+- Describe what to change about the user's logo specifically
+- Explain why it matters from a marketing perspective
+- NOT suggest adding elements from competitor logos
+
+Compare the user's logo against the competitor logos:
 - Note any color palette overlaps that could cause brand confusion
-- Suggest how to differentiate visually
+- Suggest how the user can differentiate visually from competitors
 
 Respond ONLY with valid JSON matching this exact schema:
 {
@@ -154,13 +176,17 @@ export function IMPROVE_LOGO_PROMPT(
     ? `Maintain the existing visual style: ${styleDescription}.`
     : "";
 
-  return `You are a professional logo designer. Improve the provided logo by applying this specific change:
+  return `You are a professional logo designer. The image provided is the user's current logo. Improve it by applying this specific change:
 
 "${improvement}"
 
 ${styleLine}
 
-Keep the overall brand identity recognizable — this should feel like a refined version of the same logo, not a completely new design. Apply only the requested improvement while preserving everything else about the logo's character.
+IMPORTANT RULES:
+- Only modify the user's logo shown in the image — do NOT add elements from any other brand
+- Keep the overall brand identity recognizable — this should feel like a refined version of the same logo, not a completely new design
+- Apply only the requested improvement while preserving everything else about the logo's character
+- Do NOT add text, names, or elements from competitor brands
 
 Output the improved logo on a clean white background.`;
 }
