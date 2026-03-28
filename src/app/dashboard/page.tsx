@@ -392,7 +392,7 @@ export default function DashboardPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="max-w-5xl mx-auto px-6 py-12 flex flex-col gap-12"
+        className="max-w-5xl mx-auto px-4 py-8 sm:px-6 sm:py-12 flex flex-col gap-12"
       >
 
         {/* ── Header ── */}
@@ -415,7 +415,7 @@ export default function DashboardPage() {
           <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 w-full sm:w-auto rounded-full bg-[#5227FF] hover:bg-[#6B3FFF] disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
           >
             {downloadingAll ? (
               <>
@@ -438,7 +438,7 @@ export default function DashboardPage() {
 
         {/* ── Tagline & Script ── */}
         <motion.section variants={staggerChild} className="flex flex-col gap-3">
-          <p className="text-3xl font-bold leading-snug">
+          <p className="text-xl sm:text-3xl font-bold leading-snug">
             &ldquo;{campaign.proposal.tagline}&rdquo;
           </p>
 

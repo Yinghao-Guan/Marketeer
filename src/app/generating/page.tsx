@@ -81,7 +81,7 @@ export default function GeneratingPage() {
             custom={0}
             className="w-full max-w-4xl gpu-layer"
           >
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <PlaceholderBanner label="1:1 Square" aspect="aspect-square" />
               <PlaceholderBanner label="16:9 Landscape" aspect="aspect-video" />
               <PlaceholderBanner label="9:16 Portrait" aspect="aspect-[9/16]" />
@@ -183,14 +183,14 @@ export default function GeneratingPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Your campaign is ready</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Your campaign is ready</h2>
               <p className="mt-2 text-white/50">
                 All your assets have been generated. Head to the dashboard to review and download.
               </p>
             </div>
             <button
               onClick={() => router.push("/dashboard")}
-              className="px-10 py-4 rounded-full bg-white text-black font-semibold text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
+              className="px-8 py-3 sm:px-10 sm:py-4 rounded-full bg-white text-black font-semibold text-base sm:text-lg transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] active:scale-[0.98]"
             >
               Continue to Dashboard
             </button>
@@ -200,7 +200,7 @@ export default function GeneratingPage() {
 
       {/* Progress dots */}
       {stage !== "done" && (
-        <div className="fixed bottom-8 flex gap-2">
+        <div className="fixed bottom-4 sm:bottom-8 flex gap-2">
           {["banners", "video", "jingle"].map((section, i) => {
             const sectionIndex = Math.floor(STAGE_ORDER.indexOf(stage) / 2);
             const isActive = i <= sectionIndex;
@@ -228,8 +228,8 @@ function IntroCard({ title, subtitle }: { title: string; subtitle: string }) {
       transition={{ duration: 0.8, ease: EASE_SMOOTH }}
       className="text-center gpu-layer"
     >
-      <h2 className="text-4xl font-bold text-white">{title}</h2>
-      <p className="mt-2 text-white/50 text-lg">{subtitle}</p>
+      <h2 className="text-2xl sm:text-4xl font-bold text-white">{title}</h2>
+      <p className="mt-2 text-white/50 text-base sm:text-lg">{subtitle}</p>
     </motion.div>
   );
 }

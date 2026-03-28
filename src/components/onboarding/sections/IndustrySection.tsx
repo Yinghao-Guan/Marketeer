@@ -55,7 +55,7 @@ export default function IndustrySection({
               This shapes the style and tone of your campaign.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {industries.map((industry) => (
               <button
                 key={industry}

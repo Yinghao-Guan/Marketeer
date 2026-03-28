@@ -232,3 +232,29 @@
   -webkit-text-fill-color: transparent;
   animation: gradient-shift 6s ease infinite;
 }
+
+/* ── Reduced glass blur on mobile for GPU savings ── */
+@media (max-width: 639px) {
+  .glass-card {
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glass-card-compact {
+    border-radius: 0.75rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* ── Onboarding assembled puzzle grid ── */
+.puzzle-grid {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .puzzle-grid {
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: minmax(120px, 1fr) minmax(120px, 1fr);
+    grid-template-areas: "logo location" "competitor industry";
+  }
+}

@@ -73,7 +73,7 @@ export default function CompetitorSection({
             {images.map((src, i) => (
               <div
                 key={i}
-                className="group relative h-28 w-28 flex-shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10"
+                className="group relative h-20 w-20 sm:h-28 sm:w-28 flex-shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10"
               >
                 <img
                   src={src}
@@ -82,7 +82,7 @@ export default function CompetitorSection({
                 />
                 <button
                   onClick={() => handleRemove(i)}
-                  className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100"
                 >
                   ✕
                 </button>
@@ -97,7 +97,7 @@ export default function CompetitorSection({
                 setIsDragging(true);
               }}
               onDragLeave={() => setIsDragging(false)}
-              className={`flex h-28 flex-1 min-w-[7rem] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
+              className={`flex h-20 sm:h-28 flex-1 min-w-[5rem] sm:min-w-[7rem] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
                 isDragging
                   ? "border-[#5227FF] bg-[#5227FF]/10"
                   : "border-white/20 hover:border-white/40"

@@ -112,7 +112,7 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
           ref={videoRef}
           src={videoUrl ?? undefined}
           poster={posterUrl ?? undefined}
-          className="w-full max-h-72 object-contain bg-black"
+          className="w-full max-h-56 sm:max-h-72 object-contain bg-black"
           preload="metadata"
         />
 
@@ -134,7 +134,7 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
           onClick={togglePlay}
           disabled={!videoUrl}
           aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-11 h-11 sm:w-8 sm:h-8 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
         >
           {isPlaying ? (
             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -173,7 +173,7 @@ export default function VideoPlayer({ src, poster, label }: VideoPlayerProps) {
           onClick={handleFullscreen}
           disabled={!videoUrl}
           aria-label="Fullscreen"
-          className="flex-shrink-0 text-white/40 hover:text-white/80 disabled:opacity-40 transition-colors"
+          className="flex-shrink-0 w-11 h-11 sm:w-auto sm:h-auto flex items-center justify-center text-white/40 hover:text-white/80 disabled:opacity-40 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />

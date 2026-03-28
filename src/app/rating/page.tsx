@@ -269,7 +269,7 @@ export default function RatingPage() {
           <>
             {/* Logo preview */}
             <motion.div variants={staggerChild} className="flex justify-center mb-8">
-              <div className="glass-card w-48 h-48 overflow-hidden flex items-center justify-center">
+              <div className="glass-card w-32 h-32 sm:w-48 sm:h-48 overflow-hidden flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/png;base64,${logoBase64}`}
@@ -300,7 +300,7 @@ export default function RatingPage() {
                         className={`flex-shrink-0 flex flex-col items-center gap-1 rounded-lg p-2 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                           isActive ? "ring-2 ring-white bg-white/10" : "hover:bg-white/5"
                         }`}>
-                        <div className="w-16 h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white p-1.5 flex items-center justify-center">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={`data:image/png;base64,${entry.logoBase64}`} alt={`Version ${i + 1}`}
                             className="max-w-full max-h-full object-contain" />

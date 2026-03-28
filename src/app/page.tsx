@@ -82,9 +82,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Left — DomeGallery */}
-      <div className="relative h-screen overflow-hidden" style={{ width: "70%" }}>
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+      {/* Left — DomeGallery (hidden on mobile — heavy WebGL) */}
+      <div className="relative hidden lg:block lg:h-screen overflow-hidden lg:w-[70%]">
         <DomeGallery
           images={STOREFRONT_IMAGES}
           fit={1}
@@ -99,14 +99,14 @@ export default function Home() {
         <div
           className="absolute top-0 right-0 h-full pointer-events-none z-10"
           style={{
-            width: "200px",
+            width: "clamp(80px, 15vw, 200px)",
             background: "linear-gradient(to right, transparent, #0a0a0a)",
           }}
         />
       </div>
 
       {/* Right — Branding + CTA */}
-      <div className="relative h-screen overflow-hidden" style={{ width: "30%" }}>
+      <div className="relative h-screen overflow-hidden w-full lg:w-[30%]">
         {/* Liquid Ether background */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
           <LiquidEther
@@ -121,7 +121,7 @@ export default function Home() {
             autoRampDuration={0.8}
           />
         </div>
-        <div className="relative z-10 flex flex-col items-center h-full px-12">
+        <div className="relative z-10 flex flex-col items-center h-full px-6 sm:px-8 lg:px-12">
         {/* Spacer to push content to center */}
         <div className="flex-1" />
 
@@ -133,7 +133,7 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           custom={0.1}
-          className="text-8xl tracking-tight text-center whitespace-nowrap gradient-text-animated"
+          className="text-5xl sm:text-6xl lg:text-8xl tracking-tight text-center whitespace-nowrap gradient-text-animated"
           style={{ fontFamily: "var(--font-dirtyline)" }}
         >
           Marketeer
@@ -159,7 +159,7 @@ export default function Home() {
           className="flex items-center justify-center gap-1.5 h-8 -mt-2"
         >
           <span className="text-[13px] tracking-[0.15em] uppercase font-light text-white/30">for</span>
-          <div className="relative h-5 w-[120px] overflow-hidden">
+          <div className="relative h-5 w-[100px] sm:w-[120px] overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
                 key={businessTypes[typeIndex]}
@@ -181,7 +181,7 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           custom={0.4}
-          className="text-lg font-light text-white/70 text-center leading-relaxed"
+          className="text-base sm:text-lg font-light text-white/70 text-center leading-relaxed"
         >
           Drop your logo. Get a full campaign.
         </motion.p>

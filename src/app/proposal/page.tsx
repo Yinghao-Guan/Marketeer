@@ -354,7 +354,7 @@ export default function ProposalPage() {
                         transition={{ duration: 0.5 }}
                         className="text-center mb-12"
                     >
-                        <h1 className="text-3xl font-bold mb-2">Building your campaign</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Building your campaign</h1>
                         <p className="text-white/30 text-sm">This usually takes 1-3 minutes. Hang tight.</p>
                     </motion.div>
 
@@ -409,7 +409,7 @@ export default function ProposalPage() {
                                             key="banners-ready"
                                             initial={{ opacity: 0, scale: 0.97 }}
                                             animate={{ opacity: 1, scale: 1 }}
-                                            className="grid grid-cols-3 gap-3"
+                                            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                                         >
                                             {generatedBanners.map((b) => (
                                                 <div key={b.format} className="rounded-lg border border-white/10 overflow-hidden">

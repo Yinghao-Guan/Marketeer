@@ -34,7 +34,7 @@ function CampaignShape() {
 
 export default function HeroScene() {
   return (
-    <div style={{ width: 520, height: 340 }}>
+    <div className="w-full max-w-[520px] aspect-[520/340]">
       <Canvas
         gl={{ alpha: true, antialias: true }}
         camera={{ position: [0, 0, 5.5], fov: 45 }}

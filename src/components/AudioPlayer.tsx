@@ -101,7 +101,7 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
           onClick={togglePlay}
           disabled={!objectUrl}
           aria-label={isPlaying ? "Pause" : "Play"}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-11 h-11 rounded-full bg-accent-purple hover:bg-[#6B3FFF] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
         >
           {isPlaying ? (
             /* Pause icon */

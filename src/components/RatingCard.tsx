@@ -76,7 +76,7 @@ function FormatRow({
   reasoning: string;
 }) {
   return (
-    <div className="flex items-start gap-4 py-3 border-b border-white/10 last:border-0">
+    <div className="flex items-start gap-3 sm:gap-4 py-3 border-b border-white/10 last:border-0">
       <ScoreRing score={score} size={56} />
       <div className="flex-1 min-w-0">
         <h4 className="text-sm font-semibold text-white">{label}</h4>

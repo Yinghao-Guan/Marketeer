@@ -129,14 +129,7 @@ export default function OnboardingPage() {
                 </p>
               </div>
 
-              <div
-                className="grid gap-3 w-full"
-                style={{
-                  gridTemplateColumns: "3fr 2fr",
-                  gridTemplateRows: "minmax(120px, 1fr) minmax(120px, 1fr)",
-                  gridTemplateAreas: `"logo location" "competitor industry"`,
-                }}
-              >
+              <div className="grid gap-3 w-full puzzle-grid">
                 <PuzzleBlock
                   layoutId="logo"
                   mode="grid"

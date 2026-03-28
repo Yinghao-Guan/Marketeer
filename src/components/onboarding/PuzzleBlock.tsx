@@ -22,9 +22,9 @@ export default function PuzzleBlock({
 }: PuzzleBlockProps) {
   const baseClass =
     mode === "active"
-      ? "glass-card w-full max-w-2xl p-10"
+      ? "glass-card w-full max-w-2xl p-5 sm:p-8 lg:p-10"
       : mode === "completed"
-        ? "glass-card px-6 py-5 cursor-pointer hover:ring-1 hover:ring-white/20 transition-shadow"
+        ? "glass-card px-4 py-3 sm:px-6 sm:py-5 cursor-pointer hover:ring-1 hover:ring-white/20 transition-shadow"
         : "glass-card p-6 h-full overflow-hidden cursor-pointer hover:ring-1 hover:ring-white/20 transition-shadow";
 
   return (

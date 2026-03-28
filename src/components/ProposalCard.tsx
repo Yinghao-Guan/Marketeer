@@ -20,7 +20,7 @@ export default function ProposalCard({ proposal, colors }: ProposalCardProps) {
             {/* Tagline */}
             <div className="rounded-xl bg-white/5 p-6 ring-1 ring-white/10">
                 <p className="text-xs font-medium uppercase tracking-widest text-white/40 mb-2">Tagline</p>
-                <p className="text-3xl font-bold text-white">&ldquo;{proposal.tagline}&rdquo;</p>
+                <p className="text-xl sm:text-3xl font-bold text-white">&ldquo;{proposal.tagline}&rdquo;</p>
             </div>
 
             {/* Color palette */}

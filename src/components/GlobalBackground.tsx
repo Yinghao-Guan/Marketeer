@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
 
@@ -10,9 +11,17 @@ const LiquidEther = dynamic(
 
 export default function GlobalBackground() {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
 
-  // The hero page has its own LiquidEther placement, so skip it there
-  if (pathname === "/") return null;
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Skip on hero page (has its own LiquidEther) and on mobile (save GPU/battery)
+  if (pathname === "/" || isMobile) return null;
 
   return (
     <div className="fixed inset-0 z-0 pointer-events-none opacity-25">

@@ -25,6 +25,12 @@ export const metadata: Metadata = {
   description: "AI-powered marketing campaign generator",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
