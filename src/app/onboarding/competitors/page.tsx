@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FileUpload from "@/components/FileUpload";
 import StepWizard from "@/components/StepWizard";
 
 export default function CompetitorsPage() {
+  const router = useRouter();
   const [files, setFiles] = useState<string[]>([]);
+
+  const handleNext = () => {
+    const current = JSON.parse(sessionStorage.getItem("marketeer-campaign") || "{}");
+    const competitorLogos = files.map((f) => f.split(",")[1]);
+    sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...current, competitorLogos }));
+    router.push("/onboarding/location");
+  };
 
   return (
     <StepWizard>
@@ -26,12 +34,12 @@ export default function CompetitorsPage() {
             onFilesChange={setFiles}
             label="Drop competitor logos here, or click to browse"
           />
-          <Link
-            href="/onboarding/location"
+          <button
+            onClick={handleNext}
             className="block w-full rounded-lg bg-white py-3 text-center font-medium text-black transition-colors hover:bg-white/90"
           >
             {files.length > 0 ? "Next" : "Skip"}
-          </Link>
+          </button>
         </div>
       </div>
     </StepWizard>
