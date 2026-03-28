@@ -44,8 +44,8 @@ const MOCK_CAMPAIGN = {
 export default function DevPage() {
     const router = useRouter();
 
-    const seed = (destination: string) => {
-        sessionStorage.setItem("marketeer-campaign", JSON.stringify(MOCK_CAMPAIGN));
+    const seed = (destination: string, extra?: Record<string, unknown>) => {
+        sessionStorage.setItem("marketeer-campaign", JSON.stringify({ ...MOCK_CAMPAIGN, ...extra }));
         router.push(destination);
     };
 
@@ -64,24 +64,19 @@ export default function DevPage() {
                     → Test Proposal Page
                 </button>
                 <button
-                    onClick={() => {
-                        const withProposal = {
-                            ...MOCK_CAMPAIGN,
-                            proposal: {
-                                tagline: "Your brand, amplified.",
-                                bannerConcept: "Clean gradient with bold typography and logo lockup",
-                                jingleMood: "upbeat indie pop, 120 BPM",
-                                videoScene: "Aerial shot of a modern city at golden hour, smooth camera push, logo reveal",
-                                voiceoverScript: "Your brand deserves to be heard. Marketeer makes it happen.",
-                                voiceTone: "warm",
-                            },
-                        };
-                        sessionStorage.setItem("marketeer-campaign", JSON.stringify(withProposal));
-                        router.push("/generating");
-                    }}
+                    onClick={() => seed("/proposal", {
+                        proposal: {
+                            tagline: "Your brand, amplified.",
+                            bannerConcept: "Clean gradient with bold typography and logo lockup",
+                            jingleMood: "upbeat indie pop, 120 BPM",
+                            videoScene: "Aerial shot of a modern city at golden hour, smooth camera push, logo reveal",
+                            voiceoverScript: "Your brand deserves to be heard. Marketeer makes it happen.",
+                            voiceTone: "warm",
+                        },
+                    })}
                     className="w-full py-3 rounded-xl border border-white/20 text-white font-medium hover:bg-white/5 transition-colors"
                 >
-                    → Test Generating Page
+                    → Test Generation Flow
                 </button>
             </div>
         </main>
