@@ -17,7 +17,7 @@ export default function Home() {
 
   const start = (hasLogo: boolean) => {
     sessionStorage.setItem("marketeer-campaign", JSON.stringify({ hasLogo }));
-    router.push(hasLogo ? "/onboarding/upload-logo" : "/onboarding/location");
+    router.push(hasLogo ? "/onboarding/upload-logo" : "/onboarding/competitors");
   };
 
   return (
@@ -42,7 +42,7 @@ export default function Home() {
         initial="hidden"
         animate="visible"
         custom={0.15}
-        className="text-lg text-white/50"
+        className="text-lg text-neutral-400"
       >
         AI-powered marketing campaigns in minutes
       </motion.p>
@@ -52,7 +52,7 @@ export default function Home() {
         initial="hidden"
         animate="visible"
         custom={0.3}
-        className="mt-4 text-2xl font-medium text-white/80"
+        className="mt-4 text-2xl font-medium text-white"
       >
         Do you have a logo?
       </motion.p>
@@ -75,7 +75,7 @@ export default function Home() {
         </button>
         <button
           onClick={() => start(false)}
-          className="rounded-xl border border-white/20 px-10 py-4 text-lg font-semibold text-white transition-all hover:bg-white/10 hover:scale-105"
+          className="rounded-xl border border-neutral-700 px-10 py-4 text-lg font-semibold text-white transition-all hover:bg-neutral-800 hover:scale-105"
         >
           No
         </button>

@@ -140,7 +140,7 @@ export default function ProposalPage() {
               {/* Logo */}
               {logoBase64 && (
                 <div className="flex justify-center">
-                  <div className="w-32 h-32 rounded-2xl border border-neutral-700 bg-neutral-900 overflow-hidden flex items-center justify-center">
+                  <div className="w-40 h-40 rounded-[28px] border border-neutral-700 bg-white p-4 flex items-center justify-center shadow-lg">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`data:image/png;base64,${logoBase64}`}

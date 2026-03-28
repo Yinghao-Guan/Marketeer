@@ -47,10 +47,11 @@ export async function POST(req: NextRequest) {
       location: string;
     };
 
-    // Build content parts: user logo + competitor logos + prompt
+    // Build content parts: clearly label user logo vs competitor logos
     const parts: Array<
       { inlineData: { mimeType: string; data: string } } | { text: string }
     > = [
+      { text: "THIS IS THE USER'S LOGO TO ANALYZE (Image 1):" },
       {
         inlineData: {
           mimeType: "image/png",
@@ -59,13 +60,18 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    for (const compLogo of competitorLogosBase64) {
+    if (competitorLogosBase64.length > 0) {
       parts.push({
-        inlineData: {
-          mimeType: "image/png",
-          data: compLogo,
-        },
+        text: `THE FOLLOWING ${competitorLogosBase64.length} IMAGE(S) ARE COMPETITOR LOGOS — DO NOT analyze or improve these. Only use them for comparison:`,
       });
+      for (const compLogo of competitorLogosBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: "image/png",
+            data: compLogo,
+          },
+        });
+      }
     }
 
     parts.push({
