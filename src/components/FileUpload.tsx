@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { rasterizeSvgDataUrl } from "@/lib/rasterize-svg";
 
 interface FileUploadProps {
   multiple?: boolean;
@@ -32,16 +33,26 @@ export default function FileUpload({
           })
       );
 
-      Promise.all(readers).then((results) => {
-        if (multiple) {
-          const updated = [...previews, ...results];
-          setPreviews(updated);
-          onFilesChange(updated);
-        } else {
-          setPreviews(results.slice(0, 1));
-          onFilesChange(results.slice(0, 1));
-        }
-      });
+      Promise.all(readers)
+        .then((results) =>
+          Promise.all(
+            results.map((dataUrl) =>
+              dataUrl.startsWith("data:image/svg+xml")
+                ? rasterizeSvgDataUrl(dataUrl)
+                : dataUrl
+            )
+          )
+        )
+        .then((results) => {
+          if (multiple) {
+            const updated = [...previews, ...results];
+            setPreviews(updated);
+            onFilesChange(updated);
+          } else {
+            setPreviews(results.slice(0, 1));
+            onFilesChange(results.slice(0, 1));
+          }
+        });
     },
     [multiple, previews, onFilesChange]
   );
@@ -80,11 +91,11 @@ export default function FileUpload({
         }`}
       >
         <p className="text-white/60">{label}</p>
-        <p className="mt-1 text-sm text-white/40">PNG, JPG, or WebP</p>
+        <p className="mt-1 text-sm text-white/40">PNG, JPG, WebP, or SVG</p>
         <input
           ref={inputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
           multiple={multiple}
           className="hidden"
           onChange={(e) => {
