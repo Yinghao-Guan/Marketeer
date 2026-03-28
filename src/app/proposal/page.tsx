@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { saveCampaign, type Banner } from "@/lib/store";
 import { FINAL_VIDEO_VERSION, mergeVideoAudio } from "@/lib/ffmpeg";
 import ProposalCard from "@/components/ProposalCard";
@@ -327,65 +328,149 @@ export default function ProposalPage() {
 
     // ── Generating screen ─────────────────────────────────────────────────────
     if (phase === "generating") {
+        const activeStep = stepStatuses.findIndex((s) => s === "active");
+        const doneCount = stepStatuses.filter((s) => s === "done").length;
+        const progressPct = Math.round((doneCount / STEPS.length) * 100);
+
         return (
-            <main className="min-h-screen bg-black text-white flex items-center justify-center">
-                <div className="w-full max-w-5xl px-4 py-8 grid gap-8 lg:grid-cols-[320px_1fr]">
-                    <div className="space-y-6">
-                        <h1 className="text-2xl font-bold mb-8">Generating your campaign</h1>
-                        {STEPS.map((label, i) => (
-                            <div key={label} className="flex items-center gap-4">
-                                <StatusIcon status={stepStatuses[i]} />
-                                <span className={`text-sm transition-colors ${
-                                    stepStatuses[i] === "active" ? "text-white font-medium" :
-                                    stepStatuses[i] === "done" ? "text-white/40 line-through" :
-                                    stepStatuses[i] === "error" ? "text-red-400" :
-                                    "text-white/20"
-                                }`}>{label}</span>
-                            </div>
-                        ))}
-                    </div>
+            <main className="min-h-screen bg-black text-white flex flex-col">
+                {/* Top progress bar */}
+                <div className="h-0.5 bg-white/10 w-full">
+                    <motion.div
+                        className="h-full bg-white"
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${progressPct}%` }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                    />
+                </div>
 
-                    <div className="space-y-6">
-                        <section className="rounded-xl border border-white/10 bg-white/5 p-4">
-                            <h2 className="text-sm font-semibold text-white/80 mb-3">Banners</h2>
-                            {generatedBanners.length ? (
-                                <div className="grid grid-cols-3 gap-3">
-                                    {generatedBanners.map((b) => (
-                                        <div key={b.format} className="rounded-lg border border-white/10 bg-black/30 p-2">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={`data:image/png;base64,${b.imageBase64}`}
-                                                alt={`${b.format} banner`}
-                                                className="w-full aspect-square object-contain rounded"
-                                            />
-                                            <p className="mt-2 text-[11px] text-white/50 text-center">{b.format}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-white/40">Generating banner assets...</p>
+                <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="text-center mb-12"
+                    >
+                        <h1 className="text-3xl font-bold mb-2">Building your campaign</h1>
+                        <p className="text-white/40 text-sm">This usually takes 1–3 minutes. Hang tight.</p>
+                    </motion.div>
+
+                    <div className="w-full max-w-4xl grid gap-8 lg:grid-cols-[260px_1fr]">
+                        {/* Steps sidebar */}
+                        <div className="space-y-3">
+                            {STEPS.map((label, i) => (
+                                <motion.div
+                                    key={label}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.07, duration: 0.4 }}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                                        stepStatuses[i] === "active"
+                                            ? "bg-white/10 border border-white/20"
+                                            : stepStatuses[i] === "done"
+                                            ? "opacity-40"
+                                            : stepStatuses[i] === "error"
+                                            ? "bg-red-500/10 border border-red-500/20"
+                                            : "opacity-20"
+                                    }`}
+                                >
+                                    <StatusIcon status={stepStatuses[i]} />
+                                    <span className={`text-sm ${
+                                        stepStatuses[i] === "active" ? "text-white font-medium" :
+                                        stepStatuses[i] === "error" ? "text-red-400" :
+                                        "text-white"
+                                    }`}>{label}</span>
+                                </motion.div>
+                            ))}
+
+                            {activeStep >= 0 && (
+                                <motion.p
+                                    key={activeStep}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="px-4 text-[11px] text-white/30 mt-2"
+                                >
+                                    Step {activeStep + 1} of {STEPS.length}
+                                </motion.p>
                             )}
-                        </section>
+                        </div>
 
-                        <section className="grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                                <h2 className="text-sm font-semibold text-white/80 mb-3">Jingle</h2>
-                                {generatedJingle ? <AudioPlayer src={generatedJingle} /> : <p className="text-sm text-white/40">Generating jingle...</p>}
+                        {/* Live asset previews */}
+                        <div className="space-y-4">
+                            {/* Banners */}
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Banners</h2>
+                                <AnimatePresence mode="wait">
+                                    {generatedBanners.length ? (
+                                        <motion.div
+                                            key="banners-ready"
+                                            initial={{ opacity: 0, scale: 0.97 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="grid grid-cols-3 gap-3"
+                                        >
+                                            {generatedBanners.map((b) => (
+                                                <div key={b.format} className="rounded-lg border border-white/10 overflow-hidden">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img
+                                                        src={`data:image/png;base64,${b.imageBase64}`}
+                                                        alt={`${b.format} banner`}
+                                                        className="w-full aspect-square object-cover"
+                                                    />
+                                                    <p className="py-1.5 text-[10px] text-white/40 text-center">{b.format}</p>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div key="banners-loading" className="flex items-center gap-3 h-16">
+                                            <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                                            <span className="text-sm text-white/30">Crafting banner visuals…</span>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                                <h2 className="text-sm font-semibold text-white/80 mb-3">Voiceover</h2>
-                                {generatedVoiceover ? <AudioPlayer src={generatedVoiceover} /> : <p className="text-sm text-white/40">Generating voiceover...</p>}
-                            </div>
-                        </section>
 
-                        <section className="rounded-xl border border-white/10 bg-white/5 p-4">
-                            <h2 className="text-sm font-semibold text-white/80 mb-3">Video</h2>
-                            {generatedVideo ? (
-                                <VideoPlayer src={generatedVideo} poster={campaign?.approvedLogo} />
-                            ) : (
-                                <p className="text-sm text-white/40">Generating video...</p>
-                            )}
-                        </section>
+                            {/* Jingle + Voiceover */}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                {[
+                                    { label: "Jingle", src: generatedJingle, pending: "Composing music…" },
+                                    { label: "Voiceover", src: generatedVoiceover, pending: "Recording voice…" },
+                                ].map(({ label, src, pending }) => (
+                                    <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">{label}</h2>
+                                        <AnimatePresence mode="wait">
+                                            {src ? (
+                                                <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                                    <AudioPlayer src={src} />
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div key="loading" className="flex items-center gap-3 h-10">
+                                                    <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                                                    <span className="text-sm text-white/30">{pending}</span>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Video */}
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                                <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Video Ad</h2>
+                                <AnimatePresence mode="wait">
+                                    {generatedVideo ? (
+                                        <motion.div key="ready" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+                                            <VideoPlayer src={generatedVideo} poster={campaign?.approvedLogo} />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div key="loading" className="flex items-center gap-3 h-16">
+                                            <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                                            <span className="text-sm text-white/30">Filming your ad — this can take up to 2 min…</span>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -446,7 +531,8 @@ export default function ProposalPage() {
                         <div className="mt-8 flex flex-col gap-3">
                             <button
                                 onClick={handleApprove}
-                                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-lg hover:bg-neutral-200 transition-colors"
+                                disabled={generatingStarted.current}
+                                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-lg hover:bg-neutral-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 Looks good, generate it all
                             </button>
