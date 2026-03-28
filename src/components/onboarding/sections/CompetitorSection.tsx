@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { rasterizeSvgDataUrl } from "@/lib/rasterize-svg";
 import { EASE_SMOOTH } from "@/lib/motion";
 
 interface CompetitorSectionProps {
@@ -37,9 +38,19 @@ export default function CompetitorSection({
           reader.readAsDataURL(file);
         })
     );
-    Promise.all(readers).then((results) => {
-      setImages((prev) => [...prev, ...results]);
-    });
+    Promise.all(readers)
+      .then((results) =>
+        Promise.all(
+          results.map((dataUrl) =>
+            dataUrl.startsWith("data:image/svg+xml")
+              ? rasterizeSvgDataUrl(dataUrl)
+              : dataUrl
+          )
+        )
+      )
+      .then((results) => {
+        setImages((prev) => [...prev, ...results]);
+      });
   }, []);
 
   const handleDrop = useCallback(
@@ -112,7 +123,7 @@ export default function CompetitorSection({
             <input
               ref={inputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
               multiple
               className="hidden"
               onChange={(e) => {
