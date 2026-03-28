@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { saveCampaign } from "@/lib/store";
+import { saveCampaign, type Banner } from "@/lib/store";
 import { mergeVideoAudio } from "@/lib/ffmpeg";
 import ProposalCard from "@/components/ProposalCard";
+import AudioPlayer from "@/components/AudioPlayer";
+import VideoPlayer from "@/components/VideoPlayer";
 
 interface Proposal {
     tagline: string;
@@ -29,7 +31,7 @@ const STEPS = [
 const PROGRESS_KEY = "marketeer-generation-progress";
 
 interface GenerationProgress {
-    banners?: unknown;
+    banners?: Banner[];
     jingle?: string;
     operationId?: string;
     video?: string;
@@ -54,6 +56,10 @@ export default function ProposalPage() {
     const [revisionFeedback, setRevisionFeedback] = useState("");
     const [showRevise, setShowRevise] = useState(false);
     const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(STEPS.map(() => "waiting"));
+    const [generatedBanners, setGeneratedBanners] = useState<Banner[]>([]);
+    const [generatedJingle, setGeneratedJingle] = useState("");
+    const [generatedVideo, setGeneratedVideo] = useState("");
+    const [generatedVoiceover, setGeneratedVoiceover] = useState("");
     const generatingStarted = useRef(false);
 
     const getCampaign = useCallback(() => {
@@ -121,8 +127,12 @@ export default function ProposalPage() {
 
         setPhase("generating");
         setStepStatuses(STEPS.map(() => "waiting"));
+        setGeneratedBanners([]);
+        setGeneratedJingle("");
+        setGeneratedVideo("");
+        setGeneratedVoiceover("");
         sessionStorage.removeItem(PROGRESS_KEY);
-        let banners: unknown;
+        let banners: Banner[];
         let jingle: string | undefined;
         let videoBase64: string | undefined;
         let voiceover: string | undefined;
@@ -144,6 +154,7 @@ export default function ProposalPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error ?? "Banner generation failed");
             banners = data.banners;
+            setGeneratedBanners(data.banners);
             setStep(0, "done");
         } catch (e) {
             setStep(0, "error");
@@ -153,92 +164,102 @@ export default function ProposalPage() {
             return;
         }
 
-        // ── Step 1: Jingle ────────────────────────────────────────────────────
-        try {
+        // ── Steps 1-3: Jingle + Video + Voiceover (parallel) ─────────────────
+        const generateJingle = async () => {
             setStep(1, "active");
-            const res = await fetch("/api/generate-jingle", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    mood: campaign.jingleMood || "upbeat",
-                    jingleMood: p.jingleMood,
-                    brandName: campaign.brandName || "",
-                    industry: campaign.industry || "",
-                    tagline: p.tagline,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error ?? "Jingle generation failed");
-            jingle = data.audioBase64;
-            setStep(1, "done");
-        } catch (e) {
-            setStep(1, "error");
-            setError(e instanceof Error ? e.message : "Jingle generation failed");
-            setPhase("error");
-            generatingStarted.current = false;
-            return;
-        }
-
-        // ── Step 2: Video (async + poll) ──────────────────────────────────────
-        try {
-            setStep(2, "active");
-            let operationId = loadProgress().operationId;
-            if (!operationId) {
-                const startRes = await fetch("/api/generate-video", {
+            try {
+                const res = await fetch("/api/generate-jingle", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        videoScene: p.videoScene,
-                        styleLock,
-                        logoBase64: approvedLogo ?? null,
-                        aspectRatio: "16:9",
+                        mood: campaign.jingleMood || "upbeat",
+                        jingleMood: p.jingleMood,
+                        brandName: campaign.brandName || "",
+                        industry: campaign.industry || "",
+                        tagline: p.tagline,
                     }),
                 });
-                const startData = await startRes.json();
-                if (!startRes.ok) throw new Error(startData.error ?? "Video generation failed");
-                operationId = startData.operationId;
-                saveProgress({ operationId });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? "Jingle generation failed");
+                setGeneratedJingle(data.audioBase64);
+                setStep(1, "done");
+                return data.audioBase64 as string;
+            } catch (e) {
+                setStep(1, "error");
+                throw new Error(e instanceof Error ? e.message : "Jingle generation failed");
             }
+        };
 
-            const deadline = Date.now() + 2 * 60 * 1000;
-            while (Date.now() < deadline) {
-                await new Promise((r) => setTimeout(r, 5000));
-                const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId!)}`);
-                const pollData = await pollRes.json();
-                if (!pollRes.ok) throw new Error(pollData.error ?? "Video poll failed");
-                if (pollData.done) {
-                    videoBase64 = pollData.videoBase64;
-                    break;
+        const generateVideo = async () => {
+            setStep(2, "active");
+            try {
+                let operationId = loadProgress().operationId;
+                if (!operationId) {
+                    const startRes = await fetch("/api/generate-video", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            videoScene: p.videoScene,
+                            styleLock,
+                            logoBase64: approvedLogo ?? null,
+                            aspectRatio: "16:9",
+                        }),
+                    });
+                    const startData = await startRes.json();
+                    if (!startRes.ok) throw new Error(startData.error ?? "Video generation failed");
+                    operationId = startData.operationId;
+                    saveProgress({ operationId });
                 }
-            }
-            if (!videoBase64) throw new Error("Video generation timed out after 2 minutes");
-            setStep(2, "done");
-        } catch (e) {
-            setStep(2, "error");
-            setError(e instanceof Error ? e.message : "Video generation failed");
-            setPhase("error");
-            generatingStarted.current = false;
-            return;
-        }
 
-        // ── Step 3: Voiceover ─────────────────────────────────────────────────
-        try {
+                const deadline = Date.now() + 2 * 60 * 1000;
+                while (Date.now() < deadline) {
+                    await new Promise((r) => setTimeout(r, 5000));
+                    const pollRes = await fetch(`/api/check-video?operationId=${encodeURIComponent(operationId)}`);
+                    const pollData = await pollRes.json();
+                    if (!pollRes.ok) throw new Error(pollData.error ?? "Video poll failed");
+                    if (pollData.done) {
+                        setGeneratedVideo(pollData.videoBase64);
+                        setStep(2, "done");
+                        return pollData.videoBase64 as string;
+                    }
+                }
+                throw new Error("Video generation timed out after 2 minutes");
+            } catch (e) {
+                setStep(2, "error");
+                throw new Error(e instanceof Error ? e.message : "Video generation failed");
+            }
+        };
+
+        const generateVoiceover = async () => {
             setStep(3, "active");
-            const res = await fetch("/api/generate-voiceover", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    script: p.voiceoverScript,
-                    voiceTone: p.voiceTone,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error ?? "Voiceover generation failed");
-            voiceover = data.audioBase64;
-            setStep(3, "done");
+            try {
+                const res = await fetch("/api/generate-voiceover", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        script: p.voiceoverScript,
+                        voiceTone: p.voiceTone,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error ?? "Voiceover generation failed");
+                setGeneratedVoiceover(data.audioBase64);
+                setStep(3, "done");
+                return data.audioBase64 as string;
+            } catch (e) {
+                setStep(3, "error");
+                throw new Error(e instanceof Error ? e.message : "Voiceover generation failed");
+            }
+        };
+
+        try {
+            [jingle, videoBase64, voiceover] = await Promise.all([
+                generateJingle(),
+                generateVideo(),
+                generateVoiceover(),
+            ]);
         } catch (e) {
-            setStep(3, "error");
-            setError(e instanceof Error ? e.message : "Voiceover generation failed");
+            setError(e instanceof Error ? e.message : "Asset generation failed");
             setPhase("error");
             generatingStarted.current = false;
             return;
@@ -299,19 +320,64 @@ export default function ProposalPage() {
     if (phase === "generating") {
         return (
             <main className="min-h-screen bg-black text-white flex items-center justify-center">
-                <div className="w-full max-w-md px-4 space-y-6">
-                    <h1 className="text-2xl font-bold text-center mb-8">Generating your campaign</h1>
-                    {STEPS.map((label, i) => (
-                        <div key={label} className="flex items-center gap-4">
-                            <StatusIcon status={stepStatuses[i]} />
-                            <span className={`text-sm transition-colors ${
-                                stepStatuses[i] === "active" ? "text-white font-medium" :
-                                stepStatuses[i] === "done" ? "text-white/40 line-through" :
-                                stepStatuses[i] === "error" ? "text-red-400" :
-                                "text-white/20"
-                            }`}>{label}</span>
-                        </div>
-                    ))}
+                <div className="w-full max-w-5xl px-4 py-8 grid gap-8 lg:grid-cols-[320px_1fr]">
+                    <div className="space-y-6">
+                        <h1 className="text-2xl font-bold mb-8">Generating your campaign</h1>
+                        {STEPS.map((label, i) => (
+                            <div key={label} className="flex items-center gap-4">
+                                <StatusIcon status={stepStatuses[i]} />
+                                <span className={`text-sm transition-colors ${
+                                    stepStatuses[i] === "active" ? "text-white font-medium" :
+                                    stepStatuses[i] === "done" ? "text-white/40 line-through" :
+                                    stepStatuses[i] === "error" ? "text-red-400" :
+                                    "text-white/20"
+                                }`}>{label}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-6">
+                        <section className="rounded-xl border border-white/10 bg-white/5 p-4">
+                            <h2 className="text-sm font-semibold text-white/80 mb-3">Banners</h2>
+                            {generatedBanners.length ? (
+                                <div className="grid grid-cols-3 gap-3">
+                                    {generatedBanners.map((b) => (
+                                        <div key={b.format} className="rounded-lg border border-white/10 bg-black/30 p-2">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={`data:image/png;base64,${b.imageBase64}`}
+                                                alt={`${b.format} banner`}
+                                                className="w-full aspect-square object-contain rounded"
+                                            />
+                                            <p className="mt-2 text-[11px] text-white/50 text-center">{b.format}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-white/40">Generating banner assets...</p>
+                            )}
+                        </section>
+
+                        <section className="grid gap-4 sm:grid-cols-2">
+                            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                <h2 className="text-sm font-semibold text-white/80 mb-3">Jingle</h2>
+                                {generatedJingle ? <AudioPlayer src={generatedJingle} /> : <p className="text-sm text-white/40">Generating jingle...</p>}
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                <h2 className="text-sm font-semibold text-white/80 mb-3">Voiceover</h2>
+                                {generatedVoiceover ? <AudioPlayer src={generatedVoiceover} /> : <p className="text-sm text-white/40">Generating voiceover...</p>}
+                            </div>
+                        </section>
+
+                        <section className="rounded-xl border border-white/10 bg-white/5 p-4">
+                            <h2 className="text-sm font-semibold text-white/80 mb-3">Video</h2>
+                            {generatedVideo ? (
+                                <VideoPlayer src={generatedVideo} poster={campaign?.approvedLogo} />
+                            ) : (
+                                <p className="text-sm text-white/40">Generating video...</p>
+                            )}
+                        </section>
+                    </div>
                 </div>
             </main>
         );
