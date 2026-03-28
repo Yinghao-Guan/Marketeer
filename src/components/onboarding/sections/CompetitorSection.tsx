@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { compressImage } from "@/lib/compress-image";
 import { EASE_SMOOTH } from "@/lib/motion";
@@ -24,12 +24,11 @@ export default function CompetitorSection({
 }: CompetitorSectionProps) {
   const [images, setImages] = useState<string[]>(savedImages);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPasting, setIsPasting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = useCallback((fileList: FileList) => {
-    const imageFiles = Array.from(fileList).filter((f) =>
-      f.type.startsWith("image/")
-    );
+  const addImageFiles = useCallback((imageFiles: File[]) => {
+    if (imageFiles.length === 0) return;
     const readers = imageFiles.map(
       (file) =>
         new Promise<string>((resolve) => {
@@ -44,6 +43,28 @@ export default function CompetitorSection({
         setImages((prev) => [...prev, ...results]);
       });
   }, []);
+
+  const addFiles = useCallback((fileList: FileList) => {
+    addImageFiles(Array.from(fileList).filter((f) => f.type.startsWith("image/")));
+  }, [addImageFiles]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const imageFiles = Array.from(e.clipboardData.items)
+        .filter((item) => item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter((f): f is File => f !== null);
+      if (imageFiles.length === 0) return;
+      e.preventDefault();
+      setIsPasting(true);
+      addImageFiles(imageFiles);
+      setTimeout(() => setIsPasting(false), 600);
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [isActive, addImageFiles]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -101,14 +122,14 @@ export default function CompetitorSection({
               }}
               onDragLeave={() => setIsDragging(false)}
               className={`flex h-20 sm:h-28 flex-1 min-w-[5rem] sm:min-w-[7rem] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
-                isDragging
+                isPasting || isDragging
                   ? "border-[#5227FF] bg-[#5227FF]/10"
                   : "border-white/20 hover:border-white/40"
               }`}
             >
-              <span className="text-2xl text-white/40">+</span>
+              <span className="text-2xl text-white/40">{isPasting ? "…" : "+"}</span>
               <span className="mt-1 text-xs text-white/40">
-                {images.length === 0 ? "add image" : "add another"}
+                {isPasting ? "pasting…" : images.length === 0 ? "add or paste" : "add another"}
               </span>
             </div>
 

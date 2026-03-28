@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { compressImage } from "@/lib/compress-image";
 
 interface FileUploadProps {
@@ -16,13 +16,12 @@ export default function FileUpload({
 }: FileUploadProps) {
   const [previews, setPreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPasting, setIsPasting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const processFiles = useCallback(
-    (fileList: FileList) => {
-      const imageFiles = Array.from(fileList).filter((f) =>
-        f.type.startsWith("image/")
-      );
+  const processImageFiles = useCallback(
+    (imageFiles: File[]) => {
+      if (imageFiles.length === 0) return;
 
       const readers = imageFiles.map(
         (file) =>
@@ -48,6 +47,33 @@ export default function FileUpload({
     },
     [multiple, previews, onFilesChange]
   );
+
+  const processFiles = useCallback(
+    (fileList: FileList) => {
+      processImageFiles(
+        Array.from(fileList).filter((f) => f.type.startsWith("image/"))
+      );
+    },
+    [processImageFiles]
+  );
+
+  // Global paste listener — works anywhere on the page when this component is mounted
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const imageFiles = Array.from(e.clipboardData.items)
+        .filter((item) => item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter((f): f is File => f !== null);
+      if (imageFiles.length === 0) return;
+      e.preventDefault();
+      setIsPasting(true);
+      processImageFiles(imageFiles);
+      setTimeout(() => setIsPasting(false), 600);
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [processImageFiles]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -77,13 +103,15 @@ export default function FileUpload({
         }}
         onDragLeave={() => setIsDragging(false)}
         className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-          isDragging
+          isPasting
             ? "border-[#5227FF] bg-[#5227FF]/10"
-            : "border-white/20 hover:border-white/40"
+            : isDragging
+              ? "border-[#5227FF] bg-[#5227FF]/10"
+              : "border-white/20 hover:border-white/40"
         }`}
       >
-        <p className="text-white/60">{label}</p>
-        <p className="mt-1 text-sm text-white/40">PNG, JPG, WebP, or SVG</p>
+        <p className="text-white/60">{isPasting ? "pasting image…" : label}</p>
+        <p className="mt-1 text-sm text-white/40">PNG, JPG, WebP, SVG — or paste with ⌘V</p>
         <input
           ref={inputRef}
           type="file"
