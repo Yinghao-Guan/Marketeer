@@ -8,7 +8,8 @@
 | **Language** | TypeScript | Type safety across frontend and API routes |
 | **Styling** | Tailwind CSS | Utility-first, pairs with shadcn/ui |
 | **UI Components** | shadcn/ui | Clean component primitives (buttons, cards, inputs) |
-| **Animations** | React Bits (reactbits.dev) + Framer Motion | Animated backgrounds and page transitions |
+| **Animations** | React Bits (reactbits.dev) + Framer Motion | Animated backgrounds (Grainient) and page transitions |
+| **Display Font** | Dirtyline 36daysoftype 2022 (local, `public/fonts/`) | Decorative font for "Marketeer" title. Bundled as woff2 via `next/font/local`. |
 | **AI SDK** | @google/genai | Single SDK for all Google GenMedia models |
 | **Video/Audio Merge** | @ffmpeg/ffmpeg (WASM) | Client-side video+voiceover merge, no server dependency |
 | **Local Storage** | IndexedDB (via idb library) | Persist campaign data in the browser across sessions |
