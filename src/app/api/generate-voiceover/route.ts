@@ -62,7 +62,10 @@ export async function POST(req: Request) {
         const wavBuffer = buildWav(pcmBuffer);
         const audioBase64 = wavBuffer.toString("base64");
 
-        return Response.json({ audioBase64, voice });
+        // 16-bit mono PCM at 24000 Hz → 2 bytes per sample
+        const duration = pcmBuffer.length / (24000 * 2);
+
+        return Response.json({ audioBase64, voice, duration });
     } catch (error) {
         console.error("Voiceover generation error:", error);
         return Response.json({ error: "Failed to generate voiceover" }, { status: 500 });

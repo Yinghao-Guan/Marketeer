@@ -109,10 +109,13 @@ export async function mergeVideoAudio(
   await ffmpegInstance.writeFile(audioInput.filename, await fetchFile(audioBlob));
 
   try {
-    // Produce a browser-safe MP4 from the generated 8s Veo clip.
-    // Keep the source video duration and trim audio to match.
+    // Produce a browser-safe MP4. Loop the video so it covers the full
+    // voiceover duration (voiceover may exceed the 8s Veo clip).
+    // -stream_loop -1 makes the video loop indefinitely; -shortest stops
+    // the output when the shorter (audio) stream ends.
     const exitCode = await ffmpegInstance.exec([
       "-y",
+      "-stream_loop", "-1",
       "-i", "input.mp4",
       "-i", audioInput.filename,
       "-map", "0:v:0",
