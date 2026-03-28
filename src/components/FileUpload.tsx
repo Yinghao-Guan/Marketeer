@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { rasterizeSvgDataUrl } from "@/lib/rasterize-svg";
+import { compressImage } from "@/lib/compress-image";
 
 interface FileUploadProps {
   multiple?: boolean;
@@ -34,15 +34,7 @@ export default function FileUpload({
       );
 
       Promise.all(readers)
-        .then((results) =>
-          Promise.all(
-            results.map((dataUrl) =>
-              dataUrl.startsWith("data:image/svg+xml")
-                ? rasterizeSvgDataUrl(dataUrl)
-                : dataUrl
-            )
-          )
-        )
+        .then((results) => Promise.all(results.map((dataUrl) => compressImage(dataUrl))))
         .then((results) => {
           if (multiple) {
             const updated = [...previews, ...results];

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { rasterizeSvgDataUrl } from "@/lib/rasterize-svg";
+import { compressImage } from "@/lib/compress-image";
 import { EASE_SMOOTH } from "@/lib/motion";
 
 interface CompetitorSectionProps {
@@ -39,15 +39,7 @@ export default function CompetitorSection({
         })
     );
     Promise.all(readers)
-      .then((results) =>
-        Promise.all(
-          results.map((dataUrl) =>
-            dataUrl.startsWith("data:image/svg+xml")
-              ? rasterizeSvgDataUrl(dataUrl)
-              : dataUrl
-          )
-        )
-      )
+      .then((results) => Promise.all(results.map((dataUrl) => compressImage(dataUrl))))
       .then((results) => {
         setImages((prev) => [...prev, ...results]);
       });
