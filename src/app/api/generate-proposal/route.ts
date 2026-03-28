@@ -10,6 +10,7 @@ export async function POST(req: Request) {
             styleLock,
             competitorAnalysis,
             logoDescription,
+            description,
             revisionFeedback
         } = await req.json();
 
@@ -20,7 +21,8 @@ export async function POST(req: Request) {
             styleLock.colors,
             styleLock.style,
             JSON.stringify(competitorAnalysis),
-            logoDescription,
+            logoDescription || "",
+            description || "",
             revisionFeedback
         );
 
