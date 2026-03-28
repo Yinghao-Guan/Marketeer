@@ -29,14 +29,16 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
 
   const objectUrl = useMemo(() => {
     if (!src) return null;
+    // Data URLs already include MIME type — use directly
+    if (src.startsWith("data:")) return src;
     const bytes = Uint8Array.from(atob(src), (c) => c.charCodeAt(0));
     const blob = new Blob([bytes], { type: inferAudioMime(src) });
     return URL.createObjectURL(blob);
   }, [src]);
 
-  // Revoke object URL when source changes/unmounts
+  // Revoke object URL when source changes/unmounts (no-op for data URLs)
   useEffect(() => {
-    if (!objectUrl) return;
+    if (!objectUrl || objectUrl.startsWith("data:")) return;
     return () => {
       URL.revokeObjectURL(objectUrl);
     };
@@ -90,7 +92,7 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
       )}
 
       {/* Hidden audio element */}
-      <audio ref={audioRef} src={objectUrl ?? undefined} preload="metadata" />
+      <audio ref={audioRef} src={objectUrl ?? undefined} preload="auto" />
 
       {/* Controls */}
       <div className="flex items-center gap-3">

@@ -26,8 +26,14 @@ type RegeneratingState = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Strip the `data:<mime>;base64,` prefix if present, returning raw base64. */
+function extractBase64(src: string): string {
+  return src.startsWith("data:") ? src.split(",")[1] : src;
+}
+
 function base64ToObjectUrl(base64: string, mimeType: string): string {
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const raw = extractBase64(base64);
+  const bytes = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
   return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
 }
 
@@ -41,6 +47,12 @@ function triggerDownload(base64: string, mimeType: string, filename: string) {
 }
 
 function inferAudioType(base64: string): { mime: string; ext: string } {
+  // Data URL — MIME type is explicit
+  if (base64.startsWith("data:")) {
+    const mime = base64.slice(5, base64.indexOf(";"));
+    const ext = mime === "audio/wav" || mime === "audio/wave" ? "wav" : "mp3";
+    return { mime, ext };
+  }
   if (base64.startsWith("UklGR")) return { mime: "audio/wav", ext: "wav" };
   if (base64.startsWith("SUQz") || base64.startsWith("//uQ")) {
     return { mime: "audio/mpeg", ext: "mp3" };
@@ -184,7 +196,8 @@ export default function DashboardPage() {
         }),
       });
       const data = await res.json();
-      const jingle: string = data.audioBase64;
+      const mime: string = data.mimeType || "audio/mpeg";
+      const jingle = `data:${mime};base64,${data.audioBase64}`;
       await updateCampaign(campaign.id, { jingle });
       setCampaign((c) => c && { ...c, jingle });
     } catch (e) {
@@ -313,7 +326,7 @@ export default function DashboardPage() {
 
       if (campaign.jingle) {
         const { ext } = inferAudioType(campaign.jingle);
-        zip.file(`jingle.${ext}`, campaign.jingle, { base64: true });
+        zip.file(`jingle.${ext}`, extractBase64(campaign.jingle), { base64: true });
       }
       if (campaign.finalVideo) zip.file("video-ad.mp4", campaign.finalVideo, { base64: true });
 
